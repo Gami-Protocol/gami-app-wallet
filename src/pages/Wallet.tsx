@@ -1,4 +1,4 @@
-import { usePrivy } from '@privy-io/react-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,16 +18,16 @@ import {
 } from 'lucide-react';
 
 export default function Wallet() {
-  const { ready, authenticated, user, logout } = usePrivy();
+  const { ready, authenticated, user, logout, provider } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (ready && !authenticated) {
+    if (provider === 'privy' && ready && !authenticated) {
       navigate('/');
     }
-  }, [ready, authenticated, navigate]);
+  }, [provider, ready, authenticated, navigate]);
 
-  if (!ready || !authenticated) {
+  if (provider === 'privy' && (!ready || !authenticated)) {
     return null;
   }
 
@@ -67,9 +67,9 @@ export default function Wallet() {
             <div className="flex items-center gap-4">
               <Badge variant="secondary" className="gap-2">
                 <WalletIcon className="h-4 w-4" />
-                {user?.wallet?.address?.slice(0, 6)}...{user?.wallet?.address?.slice(-4)}
+                {user?.wallet?.address ? `${user.wallet.address.slice(0,6)}...${user.wallet.address.slice(-4)}` : 'Guest'}
               </Badge>
-              <Button variant="ghost" size="icon" onClick={logout}>
+              <Button variant="ghost" size="icon" onClick={() => logout?.()}>
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>

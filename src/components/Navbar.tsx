@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { usePrivy } from '@privy-io/react-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from 'react-router-dom';
 
 export const Navbar = () => {
-  const { login, authenticated } = usePrivy();
+  const { login, authenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleLaunchApp = () => {

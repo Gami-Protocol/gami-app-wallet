@@ -1,10 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText } from "lucide-react";
-import { usePrivy } from '@privy-io/react-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from 'react-router-dom';
 
 export const Hero = () => {
-  const { login, authenticated } = usePrivy();
+  const { login, authenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleLaunchApp = () => {
