@@ -1,7 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText } from "lucide-react";
+import { usePrivy } from '@privy-io/react-auth';
+import { useNavigate } from 'react-router-dom';
 
 export const Hero = () => {
+  const { login, authenticated } = usePrivy();
+  const navigate = useNavigate();
+
+  const handleLaunchApp = () => {
+    if (authenticated) {
+      navigate('/wallet');
+    } else {
+      login();
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
       {/* Gradient background effect */}
@@ -29,7 +42,7 @@ export const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <Button variant="hero" size="lg" className="text-lg">
+            <Button variant="hero" size="lg" className="text-lg" onClick={handleLaunchApp}>
               Launch App
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

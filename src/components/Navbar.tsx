@@ -1,7 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
+import { usePrivy } from '@privy-io/react-auth';
+import { useNavigate } from 'react-router-dom';
 
 export const Navbar = () => {
+  const { login, authenticated } = usePrivy();
+  const navigate = useNavigate();
+
+  const handleLaunchApp = () => {
+    if (authenticated) {
+      navigate('/wallet');
+    } else {
+      login();
+    }
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container px-4 md:px-6">
@@ -17,7 +30,7 @@ export const Navbar = () => {
             <a href="#" className="text-sm hover:text-primary transition-colors">HOME</a>
             <a href="#" className="text-sm hover:text-primary transition-colors">ABOUT</a>
             <a href="#" className="text-sm hover:text-primary transition-colors">DOCS</a>
-            <Button variant="hero" size="sm">
+            <Button variant="hero" size="sm" onClick={handleLaunchApp}>
               LAUNCH APP
             </Button>
           </div>
