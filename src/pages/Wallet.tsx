@@ -22,13 +22,20 @@ export default function Wallet() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Only redirect if using Privy and not authenticated
     if (provider === 'privy' && ready && !authenticated) {
       navigate('/');
     }
   }, [provider, ready, authenticated, navigate]);
 
+  // Show loading only for Privy auth, not demo mode
   if (provider === 'privy' && (!ready || !authenticated)) {
-    return null;
+    return <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-10 h-10 rounded-xl bg-gradient-primary animate-pulse mx-auto mb-4" />
+        <p className="text-muted-foreground">Loading wallet...</p>
+      </div>
+    </div>;
   }
 
   const mockData = {

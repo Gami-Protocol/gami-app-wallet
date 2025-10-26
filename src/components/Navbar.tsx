@@ -12,6 +12,8 @@ export const Navbar = () => {
       navigate('/wallet');
     } else {
       login();
+      // Navigate to wallet in demo mode too
+      setTimeout(() => navigate('/wallet'), 100);
     }
   };
 

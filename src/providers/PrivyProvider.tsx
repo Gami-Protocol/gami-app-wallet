@@ -4,8 +4,9 @@ import { ReactNode } from 'react';
 export const PrivyProvider = ({ children }: { children: ReactNode }) => {
   const appId = import.meta.env.VITE_PRIVY_APP_ID as string | undefined;
 
+  // Always provide the context, but conditionally initialize Privy
   if (!appId) {
-    console.warn('[Privy] Missing VITE_PRIVY_APP_ID. Rendering without Privy provider.');
+    console.warn('[Privy] Missing VITE_PRIVY_APP_ID. Running in demo mode.');
     return <>{children}</>;
   }
 
