@@ -1,11 +1,12 @@
 import { useAuth } from '@/hooks/use-auth';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Trophy, 
   Target, 
@@ -20,6 +21,18 @@ import {
 export default function Wallet() {
   const { ready, authenticated, user, logout, provider } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // State management
+  const [totalXP, setTotalXP] = useState(12845);
+  const [gamiBalance, setGamiBalance] = useState(2450);
+  const [stakedGami, setStakedGami] = useState(1000);
+  const [quests, setQuests] = useState([
+    { id: 1, title: 'Complete 5 Daily Tasks', reward: 500, progress: 60, category: 'Daily', claimed: false },
+    { id: 2, title: 'Stake 1000 $GAMI', reward: 1000, progress: 100, category: 'Staking', claimed: false },
+    { id: 3, title: 'Invite 3 Friends', reward: 750, progress: 33, category: 'Social', claimed: false },
+    { id: 4, title: 'Trade on Partner DEX', reward: 2000, progress: 0, category: 'DeFi', claimed: false },
+  ]);
 
   useEffect(() => {
     // Only redirect if using Privy and not authenticated
@@ -38,21 +51,10 @@ export default function Wallet() {
     </div>;
   }
 
-  const mockData = {
-    totalXP: 12845,
-    tier: 'Gold',
-    nextTierXP: 15000,
-    gamiBalance: 2450,
-    stakedGami: 1000,
-    multiplier: '2.5x',
-  };
-
-  const quests = [
-    { id: 1, title: 'Complete 5 Daily Tasks', reward: 500, progress: 60, category: 'Daily' },
-    { id: 2, title: 'Stake 1000 $GAMI', reward: 1000, progress: 100, category: 'Staking' },
-    { id: 3, title: 'Invite 3 Friends', reward: 750, progress: 33, category: 'Social' },
-    { id: 4, title: 'Trade on Partner DEX', reward: 2000, progress: 0, category: 'DeFi' },
-  ];
+  // Computed values
+  const tier = totalXP >= 15000 ? 'Diamond' : totalXP >= 10000 ? 'Gold' : 'Silver';
+  const nextTierXP = 15000;
+  const multiplier = '2.5x';
 
   const rewards = [
     { id: 1, name: 'Premium NFT Avatar', cost: 5000, available: true },
@@ -60,6 +62,95 @@ export default function Wallet() {
     { id: 3, name: 'Exclusive Discord Role', cost: 1500, available: true },
     { id: 4, name: 'Partner Token Airdrop', cost: 10000, available: false },
   ];
+
+  // Action handlers
+  const handleBuy = () => {
+    setGamiBalance(prev => prev + 500);
+    toast({
+      title: "Purchase Successful!",
+      description: "Added 500 $GAMI to your wallet",
+    });
+  };
+
+  const handleSend = () => {
+    if (gamiBalance < 100) {
+      toast({
+        title: "Insufficient Balance",
+        description: "You need at least 100 $GAMI to send",
+        variant: "destructive",
+      });
+      return;
+    }
+    setGamiBalance(prev => prev - 100);
+    toast({
+      title: "Sent Successfully!",
+      description: "Transferred 100 $GAMI",
+    });
+  };
+
+  const handleStake = () => {
+    if (gamiBalance < 500) {
+      toast({
+        title: "Insufficient Balance",
+        description: "You need at least 500 $GAMI to stake",
+        variant: "destructive",
+      });
+      return;
+    }
+    setGamiBalance(prev => prev - 500);
+    setStakedGami(prev => prev + 500);
+    toast({
+      title: "Staked Successfully!",
+      description: "Staked 500 $GAMI - your multiplier increased!",
+    });
+  };
+
+  const handleUnstake = () => {
+    if (stakedGami < 500) {
+      toast({
+        title: "Insufficient Staked Amount",
+        description: "You need at least 500 staked $GAMI to unstake",
+        variant: "destructive",
+      });
+      return;
+    }
+    setStakedGami(prev => prev - 500);
+    setGamiBalance(prev => prev + 500);
+    toast({
+      title: "Unstaked Successfully!",
+      description: "Returned 500 $GAMI to your wallet",
+    });
+  };
+
+  const handleClaim = (questId: number) => {
+    const quest = quests.find(q => q.id === questId);
+    if (!quest || quest.progress < 100 || quest.claimed) return;
+
+    setQuests(prev => prev.map(q => 
+      q.id === questId ? { ...q, claimed: true } : q
+    ));
+    setTotalXP(prev => prev + quest.reward);
+    toast({
+      title: "Quest Completed!",
+      description: `Earned ${quest.reward} XP`,
+    });
+  };
+
+  const handleRedeem = (rewardId: number, cost: number, name: string) => {
+    if (totalXP < cost) {
+      toast({
+        title: "Insufficient XP",
+        description: `You need ${cost.toLocaleString()} XP to redeem this reward`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setTotalXP(prev => prev - cost);
+    toast({
+      title: "Reward Redeemed!",
+      description: `Successfully claimed: ${name}`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -91,23 +182,23 @@ export default function Wallet() {
             <div className="flex items-start justify-between mb-6">
               <div>
                 <p className="text-sm opacity-80 mb-1">Total XP</p>
-                <h2 className="text-5xl font-bold font-display">{mockData.totalXP.toLocaleString()}</h2>
+                <h2 className="text-5xl font-bold font-display">{totalXP.toLocaleString()}</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <Trophy className="h-5 w-5" />
-                  <span className="text-lg font-semibold">Tier: {mockData.tier} ⭐</span>
+                  <span className="text-lg font-semibold">Tier: {tier} ⭐</span>
                 </div>
               </div>
               <Badge className="bg-white/20 text-white border-0 text-lg px-4 py-2">
                 <Zap className="h-4 w-4 mr-1" />
-                {mockData.multiplier}
+                {multiplier}
               </Badge>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Progress to Diamond</span>
-                <span>{mockData.nextTierXP - mockData.totalXP} XP needed</span>
+                <span>{nextTierXP - totalXP} XP needed</span>
               </div>
-              <Progress value={(mockData.totalXP / mockData.nextTierXP) * 100} className="h-3" />
+              <Progress value={(totalXP / nextTierXP) * 100} className="h-3" />
             </div>
           </CardContent>
         </Card>
@@ -122,10 +213,10 @@ export default function Wallet() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold mb-4">{mockData.gamiBalance.toLocaleString()}</p>
+              <p className="text-4xl font-bold mb-4">{gamiBalance.toLocaleString()}</p>
               <div className="flex gap-2">
-                <Button className="flex-1">Buy</Button>
-                <Button variant="outline" className="flex-1">Send</Button>
+                <Button className="flex-1" onClick={handleBuy}>Buy</Button>
+                <Button variant="outline" className="flex-1" onClick={handleSend}>Send</Button>
               </div>
             </CardContent>
           </Card>
@@ -138,10 +229,10 @@ export default function Wallet() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold mb-4">{mockData.stakedGami.toLocaleString()}</p>
+              <p className="text-4xl font-bold mb-4">{stakedGami.toLocaleString()}</p>
               <div className="flex gap-2">
-                <Button className="flex-1">Stake More</Button>
-                <Button variant="outline" className="flex-1">Unstake</Button>
+                <Button className="flex-1" onClick={handleStake}>Stake More</Button>
+                <Button variant="outline" className="flex-1" onClick={handleUnstake}>Unstake</Button>
               </div>
             </CardContent>
           </Card>
@@ -169,8 +260,11 @@ export default function Wallet() {
                         Reward: {quest.reward} XP
                       </p>
                     </div>
-                    {quest.progress === 100 && (
-                      <Button size="sm">Claim</Button>
+                    {quest.progress === 100 && !quest.claimed && (
+                      <Button size="sm" onClick={() => handleClaim(quest.id)}>Claim</Button>
+                    )}
+                    {quest.claimed && (
+                      <Badge variant="secondary">Claimed</Badge>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -202,8 +296,9 @@ export default function Wallet() {
                       </div>
                     </div>
                     <Button 
-                      disabled={!reward.available || mockData.totalXP < reward.cost}
+                      disabled={!reward.available || totalXP < reward.cost}
                       variant={reward.available ? "default" : "outline"}
+                      onClick={() => handleRedeem(reward.id, reward.cost, reward.name)}
                     >
                       {reward.available ? 'Redeem' : 'Locked'}
                     </Button>

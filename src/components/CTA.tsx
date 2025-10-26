@@ -1,7 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { Code2, Users } from "lucide-react";
+import { useToast } from '@/hooks/use-toast';
 
 export const CTA = () => {
+  const { toast } = useToast();
+
+  const handleIntegrateSDK = () => {
+    toast({
+      title: "SDK Documentation Coming Soon",
+      description: "Developer documentation and integration guides will be available in our beta launch!",
+    });
+  };
+
+  const handleJoinWaitlist = () => {
+    toast({
+      title: "Added to Waitlist!",
+      description: "We'll notify you when beta access is available. Stay tuned!",
+    });
+  };
+
   return (
     <section className="py-24 px-4 md:px-6 relative overflow-hidden">
       {/* Background gradient */}
@@ -17,11 +34,11 @@ export const CTA = () => {
             Developers, creators, and brands — plug in your world and start rewarding engagement instantly.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button variant="hero" size="lg" className="text-lg">
+            <Button variant="hero" size="lg" className="text-lg" onClick={handleIntegrateSDK}>
               <Code2 className="mr-2 h-5 w-5" />
               Integrate SDK
             </Button>
-            <Button variant="hero-outline" size="lg" className="text-lg">
+            <Button variant="hero-outline" size="lg" className="text-lg" onClick={handleJoinWaitlist}>
               <Users className="mr-2 h-5 w-5" />
               Join the Waitlist
             </Button>

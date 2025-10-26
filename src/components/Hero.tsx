@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, FileText } from "lucide-react";
 import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 export const Hero = () => {
   const { login, authenticated } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleLaunchApp = () => {
     if (authenticated) {
@@ -15,6 +17,13 @@ export const Hero = () => {
       // Navigate to wallet in demo mode too
       setTimeout(() => navigate('/wallet'), 100);
     }
+  };
+
+  const handleViewLitepaper = () => {
+    toast({
+      title: "Litepaper Opening Soon",
+      description: "Our comprehensive litepaper will be available shortly!",
+    });
   };
 
   return (
@@ -48,7 +57,7 @@ export const Hero = () => {
               Launch App
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="hero-outline" size="lg" className="text-lg">
+            <Button variant="hero-outline" size="lg" className="text-lg" onClick={handleViewLitepaper}>
               <FileText className="mr-2 h-5 w-5" />
               View Litepaper
             </Button>
