@@ -167,7 +167,10 @@ export default function Wallet() {
                 <WalletIcon className="h-4 w-4" />
                 {user?.wallet?.address ? `${user.wallet.address.slice(0,6)}...${user.wallet.address.slice(-4)}` : 'Guest'}
               </Badge>
-              <Button variant="ghost" size="icon" onClick={() => logout?.()}>
+              <Button variant="ghost" size="icon" onClick={() => {
+                logout?.();
+                navigate('/');
+              }}>
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
