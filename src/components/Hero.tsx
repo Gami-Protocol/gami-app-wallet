@@ -3,6 +3,7 @@ import { ArrowRight, FileText } from "lucide-react";
 import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import gamiLogo from '@/assets/gami-logo.png';
 
 export const Hero = () => {
   const { login, authenticated } = useAuth();
@@ -36,8 +37,12 @@ export const Hero = () => {
       
       <div className="container px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-8 animate-fade-up">
-          {/* Logo placeholder - will add image later */}
-          <div className="w-20 h-20 rounded-2xl bg-gradient-primary animate-glow" />
+          {/* Logo */}
+          <img 
+            src={gamiLogo} 
+            alt="Gami Protocol Logo" 
+            className="w-32 h-32 md:w-40 md:h-40 object-contain opacity-90 mix-blend-screen animate-glow"
+          />
           
           {/* Hero headline with mixed typography */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight max-w-5xl font-display">

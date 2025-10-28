@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from 'react-router-dom';
+import gamiLogo from '@/assets/gami-logo.png';
 
 export const Navbar = () => {
   const { login, authenticated } = useAuth();
@@ -23,8 +24,11 @@ export const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-primary" />
-            <span className="font-bold text-xl">Gami Protocol</span>
+            <img 
+              src={gamiLogo} 
+              alt="Gami Protocol" 
+              className="h-10 w-auto object-contain opacity-90"
+            />
           </div>
           
           {/* Desktop navigation */}
