@@ -16,9 +16,9 @@ export const WalletShowcase = () => {
               and redeem across all partners.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button variant="hero" size="lg">
+              <Button variant="hero" size="lg" disabled>
                 <Download className="mr-2 h-5 w-5" />
-                Download for iOS
+                Coming Soon - iOS
               </Button>
               <Button variant="hero-outline" size="lg">
                 <Globe className="mr-2 h-5 w-5" />
