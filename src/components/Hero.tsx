@@ -41,7 +41,7 @@ export const Hero = () => {
           
           {/* Hero headline with mixed typography */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight max-w-5xl font-display">
-            <span className="text-foreground">The Modular</span>{" "}
+            <span className="text-foreground">The Modular off chain and</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-primary">
               On-Chain
             </span>{" "}
