@@ -148,32 +148,24 @@ export default function Wallet() {
     
     setGeneratingWallet(true);
     try {
-      // Generate a random Ethereum-style address
-      const randomAddress = '0x' + Array.from({ length: 40 }, () => 
-        Math.floor(Math.random() * 16).toString(16)
-      ).join('');
-
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('wallets')
-        .update({ wallet_address: randomAddress })
-        .eq('user_id', authUser.id);
+      const { data, error } = await supabase.rpc('generate_wallet_address');
 
       if (error) throw error;
+      if (!data?.[0]?.success) {
+        throw new Error(data?.[0]?.error_message || 'Failed to generate wallet');
+      }
 
-      setWalletData(prev => prev ? { ...prev, wallet_address: randomAddress } : null);
+      const walletAddress = data[0].wallet_address;
+      setWalletData(prev => prev ? { ...prev, wallet_address: walletAddress } : null);
       
       toast({
         title: "Wallet Generated! 🎉",
         description: "Your unique wallet address has been created",
       });
     } catch (error) {
-      console.error('Error generating wallet:', error);
       toast({
         title: "Error",
-        description: "Failed to generate wallet address",
+        description: error instanceof Error ? error.message : "Failed to generate wallet address",
         variant: "destructive",
       });
     } finally {
@@ -264,45 +256,30 @@ export default function Wallet() {
         return;
       }
 
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
+      // Use secure RPC function
+      const { data, error } = await supabase.rpc('claim_quest_reward', {
+        p_quest_participant_id: questId,
+        p_expected_reward: quest.reward
+      });
 
-      // Update quest status and wallet XP
-      const newXP = currentXP + quest.reward;
-      const newLevel = calculateLevel(newXP);
-      const newLevelBonus = calculateLevelBonus(newLevel);
-      
-      const [questUpdate, walletUpdate, airdropUpdate] = await Promise.all([
-        supabase.from('quest_participants').update({ 
-          status: 'completed',
-          completed_at: new Date().toISOString()
-        }).eq('id', questId),
-        supabase.from('wallets').update({ 
-          xp: newXP,
-          level: newLevel
-        }).eq('user_id', authUser.id),
-        supabase.from('airdrop_allocations').update({
-          quest_bonus: (airdropData?.quest_bonus || 0) + quest.reward / 10,
-          level_bonus: newLevelBonus
-        }).eq('user_id', authUser.id)
-      ]);
-
-      if (questUpdate.error || walletUpdate.error || airdropUpdate.error) {
-        throw new Error('Failed to update data');
+      if (error) throw error;
+      if (!data?.[0]?.success) {
+        throw new Error(data?.[0]?.error_message || 'Failed to claim reward');
       }
 
+      const { new_xp, new_level } = data[0];
+      
       // Refresh data
       await Promise.all([fetchWalletData(), fetchQuests()]);
 
       toast({
         title: "Quest Completed! 🎉",
-        description: `Earned ${quest.reward} XP${newLevel > currentLevel ? ` and leveled up to ${newLevel}!` : ''}`,
+        description: `Earned ${quest.reward} XP${new_level > currentLevel ? ` and leveled up to ${new_level}!` : ''}`,
       });
     } catch (error) {
-      console.error('Error claiming quest:', error);
       toast({
         title: "Error",
-        description: "Failed to claim quest reward",
+        description: error instanceof Error ? error.message : "Failed to claim quest reward",
         variant: "destructive",
       });
     }
@@ -319,18 +296,16 @@ export default function Wallet() {
         return;
       }
 
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) return;
-
-      const newXP = currentXP - cost;
-      const newLevel = calculateLevel(newXP);
-
-      const { error } = await supabase
-        .from('wallets')
-        .update({ xp: newXP, level: newLevel })
-        .eq('user_id', authUser.id);
+      // Use secure RPC function
+      const { data, error } = await supabase.rpc('redeem_reward', {
+        p_reward_cost: cost,
+        p_reward_name: name
+      });
 
       if (error) throw error;
+      if (!data?.[0]?.success) {
+        throw new Error(data?.[0]?.error_message || 'Failed to redeem reward');
+      }
 
       await fetchWalletData();
 
@@ -339,10 +314,9 @@ export default function Wallet() {
         description: `Successfully claimed: ${name}`,
       });
     } catch (error) {
-      console.error('Error redeeming reward:', error);
       toast({
         title: "Error",
-        description: "Failed to redeem reward",
+        description: error instanceof Error ? error.message : "Failed to redeem reward",
         variant: "destructive",
       });
     }

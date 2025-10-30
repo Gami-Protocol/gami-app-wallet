@@ -381,12 +381,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_quest_reward: {
+        Args: { p_expected_reward: number; p_quest_participant_id: string }
+        Returns: {
+          error_message: string
+          new_level: number
+          new_xp: number
+          success: boolean
+        }[]
+      }
+      generate_wallet_address: {
+        Args: never
+        Returns: {
+          error_message: string
+          success: boolean
+          wallet_address: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      redeem_reward: {
+        Args: { p_reward_cost: number; p_reward_name: string }
+        Returns: {
+          error_message: string
+          new_level: number
+          new_xp: number
+          success: boolean
+        }[]
       }
       validate_access_code: {
         Args: { p_code: string; p_user_id: string }

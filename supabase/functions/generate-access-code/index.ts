@@ -6,11 +6,22 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function generateCode(tier: string): string {
-  const prefix = tier.toUpperCase().substring(0, 3);
-  const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const timestamp = Date.now().toString(36).toUpperCase();
-  return `${prefix}-${randomPart}-${timestamp}`;
+// Generate cryptographically secure random code
+function generateCode(): string {
+  // Use 16 random bytes for strong entropy
+  const randomBytes = new Uint8Array(16);
+  crypto.getRandomValues(randomBytes);
+  
+  // Convert to base62 (alphanumeric) for readability
+  const base62Chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let code = '';
+  
+  for (let i = 0; i < 16; i++) {
+    code += base62Chars[randomBytes[i] % 62];
+  }
+  
+  // Format as XXXX-XXXX-XXXX-XXXX for readability
+  return `${code.substring(0, 4)}-${code.substring(4, 8)}-${code.substring(8, 12)}-${code.substring(12, 16)}`;
 }
 
 serve(async (req) => {
@@ -44,21 +55,36 @@ serve(async (req) => {
 
     const { tier, max_uses, expires_in_days } = await req.json();
 
-    if (!tier || !["starter", "growth", "enterprise", "free"].includes(tier)) {
-      throw new Error("Invalid tier");
+    // Validate tier
+    const validTiers = ["starter", "growth", "enterprise", "free"];
+    if (!tier || !validTiers.includes(tier)) {
+      throw new Error("Invalid tier. Must be one of: starter, growth, enterprise, free");
     }
 
-    const code = generateCode(tier);
-    const expiresAt = expires_in_days 
-      ? new Date(Date.now() + expires_in_days * 24 * 60 * 60 * 1000).toISOString()
-      : null;
+    // Validate max_uses
+    const validatedMaxUses = parseInt(String(max_uses || 1));
+    if (isNaN(validatedMaxUses) || validatedMaxUses < 1 || validatedMaxUses > 10000) {
+      throw new Error("max_uses must be between 1 and 10000");
+    }
+
+    // Validate expires_in_days
+    let expiresAt = null;
+    if (expires_in_days) {
+      const validatedExpireDays = parseInt(String(expires_in_days));
+      if (isNaN(validatedExpireDays) || validatedExpireDays < 1 || validatedExpireDays > 3650) {
+        throw new Error("expires_in_days must be between 1 and 3650 (10 years)");
+      }
+      expiresAt = new Date(Date.now() + validatedExpireDays * 24 * 60 * 60 * 1000).toISOString();
+    }
+
+    const code = generateCode();
 
     const { data, error } = await supabaseClient
       .from("access_codes")
       .insert({
         code,
         tier,
-        max_uses: max_uses || 1,
+        max_uses: validatedMaxUses,
         created_by: user.id,
         expires_at: expiresAt,
       })
