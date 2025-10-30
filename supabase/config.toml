@@ -1,1 +1,13 @@
 project_id = "bawdzkcrctmqfxyfzdrk"
+
+[functions.check-subscription]
+verify_jwt = true
+
+[functions.create-checkout]
+verify_jwt = true
+
+[functions.generate-access-code]
+verify_jwt = true
+
+[functions.manage-access-codes]
+verify_jwt = true

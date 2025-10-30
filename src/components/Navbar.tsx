@@ -28,10 +28,10 @@ export const Navbar = () => {
           
           {/* Desktop navigation */}
           <div className="hidden md:flex items-center gap-8">
-            <a href="#" className="text-sm hover:text-primary transition-colors">HOME</a>
-            <a href="#" className="text-sm hover:text-primary transition-colors">ABOUT</a>
+            <a href="/" className="text-sm hover:text-primary transition-colors">HOME</a>
+            <a href="/#features" className="text-sm hover:text-primary transition-colors">FEATURES</a>
             <a href="/pricing" className="text-sm hover:text-primary transition-colors">PRICING</a>
-            <a href="#" className="text-sm hover:text-primary transition-colors">DOCS</a>
+            <a href="/#roadmap" className="text-sm hover:text-primary transition-colors">ROADMAP</a>
             <Button variant="hero" size="sm" onClick={handleLaunchApp}>
               LAUNCH APP
             </Button>

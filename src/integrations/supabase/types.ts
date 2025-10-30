@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          current_uses: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          tier: string
+          updated_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          tier: string
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          tier?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       achievements: {
         Row: {
           badge_url: string | null
@@ -251,6 +290,35 @@ export type Database = {
           },
         ]
       }
+      user_access_codes: {
+        Row: {
+          access_code_id: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_code_id: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_code_id?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_access_codes_access_code_id_fkey"
+            columns: ["access_code_id"]
+            isOneToOne: false
+            referencedRelation: "access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -319,6 +387,14 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      validate_access_code: {
+        Args: { p_code: string; p_user_id: string }
+        Returns: {
+          error_message: string
+          tier: string
+          valid: boolean
+        }[]
       }
     }
     Enums: {

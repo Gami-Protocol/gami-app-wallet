@@ -13,6 +13,8 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const [isBusinessSignup, setIsBusinessSignup] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -43,6 +45,7 @@ export default function Auth() {
           navigate("/user/dashboard");
         }
       } else {
+        // Sign up user first
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -56,8 +59,25 @@ export default function Auth() {
 
         if (error) throw error;
 
-        toast.success("Account created successfully!");
-        navigate("/user/dashboard");
+        // If business signup, validate access code
+        if (isBusinessSignup && accessCode) {
+          const { data: validationData, error: validationError } = await supabase
+            .rpc('validate_access_code', {
+              p_code: accessCode,
+              p_user_id: data.user!.id
+            });
+
+          if (validationError || !validationData?.[0]?.valid) {
+            toast.error(validationData?.[0]?.error_message || "Invalid access code");
+            return;
+          }
+
+          toast.success(`Business account created with ${validationData[0].tier} tier!`);
+          navigate("/business/dashboard");
+        } else {
+          toast.success("Account created successfully!");
+          navigate("/user/dashboard");
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Authentication failed");
@@ -74,28 +94,48 @@ export default function Auth() {
             <img src={gamiLogo} alt="Gami Protocol" className="h-12 w-auto" />
           </div>
           <CardTitle className="text-2xl text-center">
-            {isLogin ? "Welcome Back" : "Create Account"}
+            {isLogin ? "Welcome Back" : isBusinessSignup ? "Business Signup" : "Create Account"}
           </CardTitle>
           <CardDescription className="text-center">
             {isLogin
               ? "Sign in to access your wallet and quests"
+              : isBusinessSignup
+              ? "Create a business account with your access code"
               : "Join Gami Protocol and start earning rewards"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  placeholder="John Doe"
-                />
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    placeholder="John Doe"
+                  />
+                </div>
+                {isBusinessSignup && (
+                  <div className="space-y-2">
+                    <Label htmlFor="accessCode">Business Access Code</Label>
+                    <Input
+                      id="accessCode"
+                      type="text"
+                      value={accessCode}
+                      onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                      required
+                      placeholder="ENTER-ACCESS-CODE"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Get your access code from the pricing page or after subscribing
+                    </p>
+                  </div>
+                )}
+              </>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -124,16 +164,30 @@ export default function Auth() {
               {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
             </Button>
           </form>
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-4 space-y-2 text-center text-sm">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary hover:underline"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setIsBusinessSignup(false);
+              }}
+              className="text-primary hover:underline block w-full"
             >
               {isLogin
                 ? "Don't have an account? Sign up"
                 : "Already have an account? Sign in"}
             </button>
+            {!isLogin && (
+              <button
+                type="button"
+                onClick={() => setIsBusinessSignup(!isBusinessSignup)}
+                className="text-primary hover:underline block w-full"
+              >
+                {isBusinessSignup
+                  ? "Switch to user signup"
+                  : "Business signup? Enter access code"}
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>
