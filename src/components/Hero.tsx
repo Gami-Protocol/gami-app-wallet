@@ -35,7 +35,7 @@ export const Hero = () => {
           
           {/* Hero headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl leading-tight">
-            Gamify Customer Engagement.{" "}
+            <span className="font-typewriter">Gamify Customer Engagement.</span>{" "}
             <span className="text-transparent bg-clip-text bg-gradient-primary">
               Drive Real Results
             </span>{" "}

@@ -21,6 +21,9 @@ export const Navbar = () => {
               alt="Gami Protocol" 
               className="h-10 w-auto object-contain opacity-90"
             />
+            <span className="font-typewriter text-xl font-bold tracking-wide">
+              Gami Protocol
+            </span>
           </div>
           
           {/* Desktop navigation */}

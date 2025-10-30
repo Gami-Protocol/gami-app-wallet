@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
         display: ["Space Grotesk", "sans-serif"],
+        typewriter: ["Special Elite", "monospace"],
       },
       colors: {
         border: "hsl(var(--border))",
