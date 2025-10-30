@@ -21,11 +21,8 @@ export const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
-      {/* Gradient background effect */}
-      <div className="absolute inset-0 bg-gradient-radial opacity-50" />
-      
-      {/* Animated grid pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(107,78,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(107,78,255,0.05)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,black,transparent)]" />
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-radial opacity-30" />
       
       <div className="container px-4 md:px-6 relative z-10">
         <div className="flex flex-col items-center text-center space-y-8 animate-fade-up">
@@ -33,38 +30,34 @@ export const Hero = () => {
           <img 
             src={gamiLogo} 
             alt="Gami Protocol Logo" 
-            className="w-32 h-32 md:w-40 md:h-40 object-contain opacity-90 mix-blend-screen animate-glow"
+            className="w-20 h-20 md:w-24 md:h-24 object-contain opacity-90"
           />
           
-          {/* Hero headline with mixed typography */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight max-w-5xl font-display">
-            <span className="text-foreground">The Modular off chain and</span>{" "}
+          {/* Hero headline */}
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl leading-tight">
+            Your ultimate crypto wallet.{" "}
             <span className="text-transparent bg-clip-text bg-gradient-primary">
-              On-Chain
+              Packed with features
             </span>{" "}
-            <span className="text-foreground">Gamification Engine</span>
+            to simplify your crypto journey
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl">
-            Unify XP, rewards, and AI-driven engagement across apps, games, and blockchains.
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
+            Experience seamless transactions, secure storage, and powerful rewards management 
+            all in one place. Built for the future of digital assets.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <Button variant="hero" size="lg" className="text-lg" onClick={handleLaunchApp}>
-              Launch App
+              Get Started
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button variant="hero-outline" size="lg" className="text-lg" onClick={handleViewLitepaper}>
-              <FileText className="mr-2 h-5 w-5" />
-              View Litepaper
+              Learn More
             </Button>
           </div>
         </div>
       </div>
-      
-      {/* Floating orbs animation */}
-      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "1s" }} />
     </section>
   );
 };

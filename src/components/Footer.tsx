@@ -1,48 +1,61 @@
+import { Twitter, MessageCircle, Mail } from "lucide-react";
+
 export const Footer = () => {
-  const footerLinks = {
-    About: ["Vision", "Team", "Docs"],
-    Developers: ["SDK", "API", "GitHub"],
-    Community: ["Discord", "X (Twitter)", "Mirror Blog"],
-  };
-  
   return (
-    <footer className="border-t border-border bg-card/30 backdrop-blur">
-      <div className="container px-4 md:px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-          {/* Logo and tagline */}
-          <div className="col-span-2 md:col-span-1">
-            <div className="w-12 h-12 rounded-xl bg-gradient-primary mb-4" />
-            <h3 className="font-bold text-lg mb-2">Gami Protocol</h3>
-            <p className="text-sm text-muted-foreground">
-              The modular on-chain gamification engine
-            </p>
+    <footer className="py-16 bg-background border-t border-border">
+      <div className="container px-4 md:px-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Product</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="/" className="hover:text-foreground transition-colors">Home</a></li>
+              <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+              <li><a href="/wallet" className="hover:text-foreground transition-colors">Wallet</a></li>
+            </ul>
           </div>
           
-          {/* Link columns */}
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h4 className="font-semibold mb-4">{category}</h4>
-              <ul className="space-y-2">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a 
-                      href="#" 
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Resources</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="#" className="hover:text-foreground transition-colors">Guides</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Documentation</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">API</a></li>
+            </ul>
+          </div>
+          
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Support</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">FAQ</a></li>
+              <li><a href="#" className="hover:text-foreground transition-colors">Contact</a></li>
+            </ul>
+          </div>
+          
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold">Connect</h4>
+            <div className="flex space-x-3">
+              <a href="#" className="p-2 rounded-lg bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-colors">
+                <Twitter className="h-4 w-4" />
+              </a>
+              <a href="#" className="p-2 rounded-lg bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-colors">
+                <MessageCircle className="h-4 w-4" />
+              </a>
+              <a href="#" className="p-2 rounded-lg bg-muted hover:bg-muted-foreground/20 text-muted-foreground hover:text-foreground transition-colors">
+                <Mail className="h-4 w-4" />
+              </a>
             </div>
-          ))}
+          </div>
         </div>
         
-        {/* Copyright */}
-        <div className="pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          © 2025 Gami Protocol. All rights reserved.
+        <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+          <p>© 2024 Gami Protocol. All rights reserved.</p>
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
+          </div>
         </div>
       </div>
     </footer>
   );
-};
+}

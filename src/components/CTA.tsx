@@ -1,54 +1,43 @@
 import { Button } from "@/components/ui/button";
-import { Code2, Users } from "lucide-react";
-import { useToast } from '@/hooks/use-toast';
+import { ArrowRight, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export const CTA = () => {
-  const { toast } = useToast();
-
-  const handleIntegrateSDK = () => {
-    toast({
-      title: "SDK Documentation Coming Soon",
-      description: "Developer documentation and integration guides will be available in our beta launch!",
-    });
-  };
-
-  const handleJoinWaitlist = () => {
-    toast({
-      title: "Added to Waitlist!",
-      description: "We'll notify you when beta access is available. Stay tuned!",
-    });
-  };
-
+  const navigate = useNavigate();
+  
   return (
-    <section className="py-24 px-4 md:px-6 relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-radial opacity-50" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
-      
-      <div className="container relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-up">
-          <h2 className="text-4xl md:text-6xl font-bold">
-            Join the <span className="text-transparent bg-clip-text bg-gradient-primary">Universal Rewards Layer</span>
-          </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground">
-            Developers, creators, and brands — plug in your world and start rewarding engagement instantly.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button variant="hero" size="lg" className="text-lg" onClick={handleIntegrateSDK}>
-              <Code2 className="mr-2 h-5 w-5" />
-              Integrate SDK
-            </Button>
-            <Button variant="hero-outline" size="lg" className="text-lg" onClick={handleJoinWaitlist}>
-              <Users className="mr-2 h-5 w-5" />
-              Join the Waitlist
-            </Button>
+    <section className="py-20 md:py-32 bg-background">
+      <div className="container px-4 md:px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 p-12 md:p-16 text-center overflow-hidden border border-primary/20 animate-fade-up">
+            <div className="absolute inset-0 bg-gradient-radial opacity-30" />
+            
+            <div className="relative z-10">
+              <h2 className="text-3xl md:text-5xl font-bold mb-6">
+                Start your crypto journey today
+              </h2>
+              <p className="text-lg md:text-xl text-foreground/80 mb-8 max-w-2xl mx-auto">
+                Join thousands of users managing their digital assets securely with Gami Protocol
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  variant="hero" 
+                  size="lg" 
+                  className="text-lg bg-foreground text-background hover:bg-foreground/90"
+                  onClick={() => navigate('/auth')}
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+                <Button variant="outline" size="lg" className="text-lg border-foreground/20 hover:bg-foreground/10">
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  Contact Support
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      
-      {/* Animated orbs */}
-      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-float" />
-      <div className="absolute top-1/2 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "1.5s" }} />
     </section>
   );
-};
+}
