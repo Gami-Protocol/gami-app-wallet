@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          badge_url: string | null
+          created_at: string
+          description: string
+          earned_at: string
+          id: string
+          quest_id: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          badge_url?: string | null
+          created_at?: string
+          description: string
+          earned_at?: string
+          id?: string
+          quest_id?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          badge_url?: string | null
+          created_at?: string
+          description?: string
+          earned_at?: string
+          id?: string
+          quest_id?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -41,6 +82,142 @@ export type Database = {
         }
         Relationships: []
       }
+      quest_participants: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          progress: number
+          quest_id: string
+          status: Database["public"]["Enums"]["quest_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          quest_id: string
+          status?: Database["public"]["Enums"]["quest_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          quest_id?: string
+          status?: Database["public"]["Enums"]["quest_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_participants_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quests: {
+        Row: {
+          business_id: string
+          created_at: string
+          current_participants: number
+          description: string
+          difficulty: Database["public"]["Enums"]["quest_difficulty"]
+          end_date: string | null
+          id: string
+          max_participants: number | null
+          requirements: Json | null
+          reward_amount: number
+          reward_token: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["quest_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          current_participants?: number
+          description: string
+          difficulty?: Database["public"]["Enums"]["quest_difficulty"]
+          end_date?: string | null
+          id?: string
+          max_participants?: number | null
+          requirements?: Json | null
+          reward_amount: number
+          reward_token?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["quest_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          current_participants?: number
+          description?: string
+          difficulty?: Database["public"]["Enums"]["quest_difficulty"]
+          end_date?: string | null
+          id?: string
+          max_participants?: number | null
+          requirements?: Json | null
+          reward_amount?: number
+          reward_token?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["quest_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          quest_id: string | null
+          token: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          quest_id?: string | null
+          token?: string
+          type: Database["public"]["Enums"]["transaction_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          quest_id?: string | null
+          token?: string
+          type?: Database["public"]["Enums"]["transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -62,6 +239,33 @@ export type Database = {
         }
         Relationships: []
       }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          token?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -77,6 +281,9 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "business" | "admin"
+      quest_difficulty: "easy" | "medium" | "hard"
+      quest_status: "draft" | "active" | "completed" | "expired"
+      transaction_type: "reward" | "purchase" | "transfer" | "stake"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -205,6 +412,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "business", "admin"],
+      quest_difficulty: ["easy", "medium", "hard"],
+      quest_status: ["draft", "active", "completed", "expired"],
+      transaction_type: ["reward", "purchase", "transfer", "stake"],
     },
   },
 } as const
