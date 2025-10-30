@@ -6,150 +6,346 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Trophy, 
   Target, 
-  Coins, 
-  TrendingUp, 
   Gift, 
   LogOut,
   Wallet as WalletIcon,
-  Zap
+  Zap,
+  Shield,
+  Sparkles,
+  Copy,
+  RefreshCw
 } from 'lucide-react';
+import { 
+  calculateLevel, 
+  calculateXpForNextLevel, 
+  calculateLevelBonus,
+  questClaimSchema,
+  airdropUpdateSchema,
+  LEVEL_CONFIG
+} from '@/lib/wallet-validation';
+
+interface Quest {
+  id: string;
+  title: string;
+  reward: number;
+  progress: number;
+  category: string;
+  claimed: boolean;
+}
+
+interface WalletData {
+  xp: number;
+  level: number;
+  wallet_address: string | null;
+}
+
+interface AirdropAllocation {
+  base_allocation: number;
+  quest_bonus: number;
+  level_bonus: number;
+  total_allocation: number;
+}
 
 export default function Wallet() {
-  const { ready, authenticated, user, logout, provider } = useAuth();
+  const { ready, authenticated, user, logout, login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // State management
-  const [totalXP, setTotalXP] = useState(12845);
-  const [gamiBalance, setGamiBalance] = useState(2450);
-  const [stakedGami, setStakedGami] = useState(1000);
-  const [quests, setQuests] = useState([
-    { id: 1, title: 'Complete 5 Daily Tasks', reward: 500, progress: 60, category: 'Daily', claimed: false },
-    { id: 2, title: 'Stake 1000 $GAMI', reward: 1000, progress: 100, category: 'Staking', claimed: false },
-    { id: 3, title: 'Invite 3 Friends', reward: 750, progress: 33, category: 'Social', claimed: false },
-    { id: 4, title: 'Trade on Partner DEX', reward: 2000, progress: 0, category: 'DeFi', claimed: false },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [airdropData, setAirdropData] = useState<AirdropAllocation | null>(null);
+  const [quests, setQuests] = useState<Quest[]>([]);
+  const [generatingWallet, setGeneratingWallet] = useState(false);
 
+  // Fetch wallet data
   useEffect(() => {
-    // Only redirect if using Privy and not authenticated
-    if (provider === 'privy' && ready && !authenticated) {
-      navigate('/');
+    if (authenticated && user) {
+      fetchWalletData();
+      fetchQuests();
+    } else if (ready && !authenticated) {
+      setLoading(false);
     }
-  }, [provider, ready, authenticated, navigate]);
+  }, [authenticated, user, ready]);
 
-  // Show loading only for Privy auth, not demo mode
-  if (provider === 'privy' && (!ready || !authenticated)) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-10 h-10 rounded-xl bg-gradient-primary animate-pulse mx-auto mb-4" />
-        <p className="text-muted-foreground">Loading wallet...</p>
+  const fetchWalletData = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const [walletRes, airdropRes] = await Promise.all([
+        supabase.from('wallets').select('xp, level, wallet_address').eq('user_id', authUser.id).single(),
+        supabase.from('airdrop_allocations').select('*').eq('user_id', authUser.id).maybeSingle()
+      ]);
+
+      if (walletRes.data) {
+        setWalletData(walletRes.data);
+      }
+      
+      if (airdropRes.data) {
+        setAirdropData(airdropRes.data);
+      }
+    } catch (error) {
+      console.error('Error fetching wallet:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load wallet data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchQuests = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const { data, error } = await supabase
+        .from('quest_participants')
+        .select(`
+          id,
+          progress,
+          status,
+          quest_id,
+          quests (
+            title,
+            description,
+            reward_amount,
+            difficulty
+          )
+        `)
+        .eq('user_id', authUser.id)
+        .eq('status', 'active');
+
+      if (error) throw error;
+
+      const formattedQuests: Quest[] = (data || []).map((qp: any) => ({
+        id: qp.id,
+        title: qp.quests?.title || 'Unknown Quest',
+        reward: Number(qp.quests?.reward_amount || 0),
+        progress: qp.progress,
+        category: qp.quests?.difficulty || 'medium',
+        claimed: qp.status === 'completed'
+      }));
+
+      setQuests(formattedQuests);
+    } catch (error) {
+      console.error('Error fetching quests:', error);
+    }
+  };
+
+  // Generate wallet address
+  const generateWallet = async () => {
+    if (!authenticated || !user) return;
+    
+    setGeneratingWallet(true);
+    try {
+      // Generate a random Ethereum-style address
+      const randomAddress = '0x' + Array.from({ length: 40 }, () => 
+        Math.floor(Math.random() * 16).toString(16)
+      ).join('');
+
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('wallets')
+        .update({ wallet_address: randomAddress })
+        .eq('user_id', authUser.id);
+
+      if (error) throw error;
+
+      setWalletData(prev => prev ? { ...prev, wallet_address: randomAddress } : null);
+      
+      toast({
+        title: "Wallet Generated! 🎉",
+        description: "Your unique wallet address has been created",
+      });
+    } catch (error) {
+      console.error('Error generating wallet:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate wallet address",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingWallet(false);
+    }
+  };
+
+  // Copy wallet address
+  const copyAddress = () => {
+    if (walletData?.wallet_address) {
+      navigator.clipboard.writeText(walletData.wallet_address);
+      toast({
+        title: "Copied!",
+        description: "Wallet address copied to clipboard",
+      });
+    }
+  };
+
+  // Show login prompt if not authenticated
+  if (!loading && !authenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-center flex items-center justify-center gap-2">
+              <WalletIcon className="h-6 w-6" />
+              Connect Your Wallet
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-center text-muted-foreground">
+              Sign in with Privy to access your gamified wallet and start earning XP!
+            </p>
+            <Button onClick={login} className="w-full" size="lg">
+              <Shield className="mr-2 h-5 w-5" />
+              Sign in with Privy
+            </Button>
+            <div className="text-center text-sm text-muted-foreground">
+              New users automatically get a wallet and 100 base airdrop allocation
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </div>;
+    );
   }
 
-  // Computed values
-  const tier = totalXP >= 15000 ? 'Diamond' : totalXP >= 10000 ? 'Gold' : 'Silver';
-  const nextTierXP = 15000;
-  const multiplier = '2.5x';
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 rounded-xl bg-gradient-primary animate-pulse mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading wallet...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentXP = walletData?.xp || 0;
+  const currentLevel = walletData?.level || 1;
+  const xpForNextLevel = calculateXpForNextLevel(currentLevel);
+  const xpProgress = xpForNextLevel > 0 ? ((currentXP % 1000) / 1000) * 100 : 100;
+  const levelBonus = calculateLevelBonus(currentLevel);
 
   const rewards = [
-    { id: 1, name: 'Premium NFT Avatar', cost: 5000, available: true },
-    { id: 2, name: '10% Shopping Voucher', cost: 2000, available: true },
-    { id: 3, name: 'Exclusive Discord Role', cost: 1500, available: true },
-    { id: 4, name: 'Partner Token Airdrop', cost: 10000, available: false },
+    { id: 1, name: 'Early Access Badge', cost: 5000, available: true },
+    { id: 2, name: 'Premium Discord Role', cost: 2000, available: true },
+    { id: 3, name: 'Exclusive NFT', cost: 10000, available: true },
+    { id: 4, name: 'Beta Tester Badge', cost: 1500, available: true },
   ];
 
-  // Action handlers
-  const handleBuy = () => {
-    setGamiBalance(prev => prev + 500);
-    toast({
-      title: "Purchase Successful!",
-      description: "Added 500 $GAMI to your wallet",
-    });
-  };
+  const handleClaim = async (questId: string) => {
+    try {
+      const quest = quests.find(q => q.id === questId);
+      if (!quest || quest.progress < 100 || quest.claimed) return;
 
-  const handleSend = () => {
-    if (gamiBalance < 100) {
+      // Validate input
+      const validation = questClaimSchema.safeParse({
+        questId,
+        reward: quest.reward
+      });
+
+      if (!validation.success) {
+        toast({
+          title: "Invalid Request",
+          description: validation.error.errors[0].message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      // Update quest status and wallet XP
+      const newXP = currentXP + quest.reward;
+      const newLevel = calculateLevel(newXP);
+      const newLevelBonus = calculateLevelBonus(newLevel);
+      
+      const [questUpdate, walletUpdate, airdropUpdate] = await Promise.all([
+        supabase.from('quest_participants').update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        }).eq('id', questId),
+        supabase.from('wallets').update({ 
+          xp: newXP,
+          level: newLevel
+        }).eq('user_id', authUser.id),
+        supabase.from('airdrop_allocations').update({
+          quest_bonus: (airdropData?.quest_bonus || 0) + quest.reward / 10,
+          level_bonus: newLevelBonus
+        }).eq('user_id', authUser.id)
+      ]);
+
+      if (questUpdate.error || walletUpdate.error || airdropUpdate.error) {
+        throw new Error('Failed to update data');
+      }
+
+      // Refresh data
+      await Promise.all([fetchWalletData(), fetchQuests()]);
+
       toast({
-        title: "Insufficient Balance",
-        description: "You need at least 100 $GAMI to send",
+        title: "Quest Completed! 🎉",
+        description: `Earned ${quest.reward} XP${newLevel > currentLevel ? ` and leveled up to ${newLevel}!` : ''}`,
+      });
+    } catch (error) {
+      console.error('Error claiming quest:', error);
+      toast({
+        title: "Error",
+        description: "Failed to claim quest reward",
         variant: "destructive",
       });
-      return;
     }
-    setGamiBalance(prev => prev - 100);
-    toast({
-      title: "Sent Successfully!",
-      description: "Transferred 100 $GAMI",
-    });
   };
 
-  const handleStake = () => {
-    if (gamiBalance < 500) {
+  const handleRedeem = async (rewardId: number, cost: number, name: string) => {
+    try {
+      if (currentXP < cost) {
+        toast({
+          title: "Insufficient XP",
+          description: `You need ${cost.toLocaleString()} XP to redeem this reward`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const newXP = currentXP - cost;
+      const newLevel = calculateLevel(newXP);
+
+      const { error } = await supabase
+        .from('wallets')
+        .update({ xp: newXP, level: newLevel })
+        .eq('user_id', authUser.id);
+
+      if (error) throw error;
+
+      await fetchWalletData();
+
       toast({
-        title: "Insufficient Balance",
-        description: "You need at least 500 $GAMI to stake",
+        title: "Reward Redeemed! 🎁",
+        description: `Successfully claimed: ${name}`,
+      });
+    } catch (error) {
+      console.error('Error redeeming reward:', error);
+      toast({
+        title: "Error",
+        description: "Failed to redeem reward",
         variant: "destructive",
       });
-      return;
     }
-    setGamiBalance(prev => prev - 500);
-    setStakedGami(prev => prev + 500);
-    toast({
-      title: "Staked Successfully!",
-      description: "Staked 500 $GAMI - your multiplier increased!",
-    });
-  };
-
-  const handleUnstake = () => {
-    if (stakedGami < 500) {
-      toast({
-        title: "Insufficient Staked Amount",
-        description: "You need at least 500 staked $GAMI to unstake",
-        variant: "destructive",
-      });
-      return;
-    }
-    setStakedGami(prev => prev - 500);
-    setGamiBalance(prev => prev + 500);
-    toast({
-      title: "Unstaked Successfully!",
-      description: "Returned 500 $GAMI to your wallet",
-    });
-  };
-
-  const handleClaim = (questId: number) => {
-    const quest = quests.find(q => q.id === questId);
-    if (!quest || quest.progress < 100 || quest.claimed) return;
-
-    setQuests(prev => prev.map(q => 
-      q.id === questId ? { ...q, claimed: true } : q
-    ));
-    setTotalXP(prev => prev + quest.reward);
-    toast({
-      title: "Quest Completed!",
-      description: `Earned ${quest.reward} XP`,
-    });
-  };
-
-  const handleRedeem = (rewardId: number, cost: number, name: string) => {
-    if (totalXP < cost) {
-      toast({
-        title: "Insufficient XP",
-        description: `You need ${cost.toLocaleString()} XP to redeem this reward`,
-        variant: "destructive",
-      });
-      return;
-    }
-    setTotalXP(prev => prev - cost);
-    toast({
-      title: "Reward Redeemed!",
-      description: `Successfully claimed: ${name}`,
-    });
   };
 
   return (
@@ -160,13 +356,9 @@ export default function Wallet() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-primary" />
-              <span className="font-bold text-xl">Gami Wallet</span>
+              <span className="font-typewriter font-bold text-xl">Gami Wallet</span>
             </div>
             <div className="flex items-center gap-4">
-              <Badge variant="secondary" className="gap-2">
-                <WalletIcon className="h-4 w-4" />
-                {user?.wallet?.address ? `${user.wallet.address.slice(0,6)}...${user.wallet.address.slice(-4)}` : 'Guest'}
-              </Badge>
               <Button variant="ghost" size="icon" onClick={() => {
                 logout?.();
                 navigate('/');
@@ -179,67 +371,124 @@ export default function Wallet() {
       </header>
 
       <main className="container px-4 py-8 space-y-8">
-        {/* XP Overview Card */}
+        {/* Wallet Address Card */}
+        {!walletData?.wallet_address ? (
+          <Card className="border-primary/50">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <WalletIcon className="h-12 w-12 mx-auto text-primary" />
+                <div>
+                  <h3 className="font-bold text-xl mb-2">Generate Your Wallet</h3>
+                  <p className="text-muted-foreground">
+                    Create a unique wallet address to start your journey
+                  </p>
+                </div>
+                <Button 
+                  onClick={generateWallet} 
+                  disabled={generatingWallet}
+                  size="lg"
+                  className="gap-2"
+                >
+                  {generatingWallet ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5" />
+                      Generate Wallet
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground mb-1">Your Wallet Address</p>
+                  <div className="flex items-center gap-2">
+                    <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg">
+                      {walletData.wallet_address}
+                    </code>
+                    <Button variant="ghost" size="icon" onClick={copyAddress}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Level & XP Card */}
         <Card className="bg-gradient-primary border-0 text-white">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-6">
               <div>
                 <p className="text-sm opacity-80 mb-1">Total XP</p>
-                <h2 className="text-5xl font-bold font-display">{totalXP.toLocaleString()}</h2>
+                <h2 className="text-5xl font-bold font-display">{currentXP.toLocaleString()}</h2>
                 <div className="flex items-center gap-2 mt-2">
                   <Trophy className="h-5 w-5" />
-                  <span className="text-lg font-semibold">Tier: {tier} ⭐</span>
+                  <span className="text-lg font-semibold">Level {currentLevel}</span>
                 </div>
               </div>
               <Badge className="bg-white/20 text-white border-0 text-lg px-4 py-2">
                 <Zap className="h-4 w-4 mr-1" />
-                {multiplier}
+                +{levelBonus} Airdrop
               </Badge>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Progress to Diamond</span>
-                <span>{nextTierXP - totalXP} XP needed</span>
+                <span>Progress to Level {currentLevel + 1}</span>
+                <span>{currentXP % 1000} / 1000 XP</span>
               </div>
-              <Progress value={(totalXP / nextTierXP) * 100} className="h-3" />
+              <Progress value={xpProgress} className="h-3 bg-white/20" />
             </div>
           </CardContent>
         </Card>
 
-        {/* Balance Cards */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
+        {/* Airdrop Allocation Card */}
+        {airdropData && (
+          <Card className="border-secondary/50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Coins className="h-5 w-5 text-primary" />
-                $GAMI Balance
+                <Gift className="h-5 w-5 text-secondary" />
+                $GAMI Airdrop Allocation
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold mb-4">{gamiBalance.toLocaleString()}</p>
-              <div className="flex gap-2">
-                <Button className="flex-1" onClick={handleBuy}>Buy</Button>
-                <Button variant="outline" className="flex-1" onClick={handleSend}>Send</Button>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Base</p>
+                  <p className="text-2xl font-bold">{airdropData.base_allocation}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Quest Bonus</p>
+                  <p className="text-2xl font-bold text-primary">+{airdropData.quest_bonus.toFixed(1)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Level Bonus</p>
+                  <p className="text-2xl font-bold text-secondary">+{airdropData.level_bonus}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-primary">
+                    {airdropData.total_allocation.toFixed(1)}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  💡 Complete quests and level up to increase your airdrop allocation. Each quest adds bonus points, and every level grants +{LEVEL_CONFIG.airdropBonusPerLevel} allocation!
+                </p>
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-secondary" />
-                Staked $GAMI
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold mb-4">{stakedGami.toLocaleString()}</p>
-              <div className="flex gap-2">
-                <Button className="flex-1" onClick={handleStake}>Stake More</Button>
-                <Button variant="outline" className="flex-1" onClick={handleUnstake}>Unstake</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        )}
 
         {/* Tabs Section */}
         <Tabs defaultValue="quests" className="space-y-6">
@@ -249,37 +498,57 @@ export default function Wallet() {
           </TabsList>
 
           <TabsContent value="quests" className="space-y-4">
-            {quests.map((quest) => (
-              <Card key={quest.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline">{quest.category}</Badge>
-                        <h3 className="font-semibold">{quest.title}</h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Target className="h-4 w-4" />
-                        Reward: {quest.reward} XP
-                      </p>
-                    </div>
-                    {quest.progress === 100 && !quest.claimed && (
-                      <Button size="sm" onClick={() => handleClaim(quest.id)}>Claim</Button>
-                    )}
-                    {quest.claimed && (
-                      <Badge variant="secondary">Claimed</Badge>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{quest.progress}%</span>
-                    </div>
-                    <Progress value={quest.progress} />
-                  </div>
+            {quests.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    No active quests. Join quests from the Quests page to start earning!
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => navigate('/user/quests')}
+                  >
+                    Browse Quests
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
+            ) : (
+              quests.map((quest) => (
+                <Card key={quest.id}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="capitalize">{quest.category}</Badge>
+                          <h3 className="font-semibold">{quest.title}</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Target className="h-4 w-4" />
+                          Reward: {quest.reward} XP + {(quest.reward / 10).toFixed(1)} Airdrop Bonus
+                        </p>
+                      </div>
+                      {quest.progress >= 100 && !quest.claimed && (
+                        <Button size="sm" onClick={() => handleClaim(quest.id)}>
+                          Claim Reward
+                        </Button>
+                      )}
+                      {quest.claimed && (
+                        <Badge variant="secondary">✓ Claimed</Badge>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span>{quest.progress}%</span>
+                      </div>
+                      <Progress value={quest.progress} />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value="rewards" className="space-y-4">
@@ -299,11 +568,11 @@ export default function Wallet() {
                       </div>
                     </div>
                     <Button 
-                      disabled={!reward.available || totalXP < reward.cost}
+                      disabled={!reward.available || currentXP < reward.cost}
                       variant={reward.available ? "default" : "outline"}
                       onClick={() => handleRedeem(reward.id, reward.cost, reward.name)}
                     >
-                      {reward.available ? 'Redeem' : 'Locked'}
+                      {currentXP < reward.cost ? `Need ${reward.cost - currentXP} XP` : reward.available ? 'Redeem' : 'Locked'}
                     </Button>
                   </div>
                 </CardContent>

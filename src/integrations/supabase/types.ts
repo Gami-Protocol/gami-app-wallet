@@ -55,6 +55,39 @@ export type Database = {
           },
         ]
       }
+      airdrop_allocations: {
+        Row: {
+          base_allocation: number
+          created_at: string
+          id: string
+          level_bonus: number
+          quest_bonus: number
+          total_allocation: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          base_allocation?: number
+          created_at?: string
+          id?: string
+          level_bonus?: number
+          quest_bonus?: number
+          total_allocation?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          base_allocation?: number
+          created_at?: string
+          id?: string
+          level_bonus?: number
+          quest_bonus?: number
+          total_allocation?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -244,25 +277,34 @@ export type Database = {
           balance: number
           created_at: string
           id: string
+          level: number
           token: string
           updated_at: string
           user_id: string
+          wallet_address: string | null
+          xp: number
         }
         Insert: {
           balance?: number
           created_at?: string
           id?: string
+          level?: number
           token?: string
           updated_at?: string
           user_id: string
+          wallet_address?: string | null
+          xp?: number
         }
         Update: {
           balance?: number
           created_at?: string
           id?: string
+          level?: number
           token?: string
           updated_at?: string
           user_id?: string
+          wallet_address?: string | null
+          xp?: number
         }
         Relationships: []
       }
