@@ -12,10 +12,17 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [accessCode, setAccessCode] = useState("");
   const [isBusinessSignup, setIsBusinessSignup] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Business-specific fields
+  const [businessName, setBusinessName] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  
   const navigate = useNavigate();
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -51,15 +58,25 @@ export default function Auth() {
           password,
           options: {
             data: {
-              full_name: fullName,
+              username: username || undefined,
             },
-            emailRedirectTo: `${window.location.origin}/user/dashboard`,
+            emailRedirectTo: isBusinessSignup 
+              ? `${window.location.origin}/business/dashboard`
+              : `${window.location.origin}/user/dashboard`,
           },
         });
 
         if (error) throw error;
 
-        // If business signup, validate access code
+        // Update profile with username if provided
+        if (username && data.user) {
+          await supabase
+            .from("profiles")
+            .update({ username })
+            .eq("id", data.user.id);
+        }
+
+        // If business signup, validate access code and create business profile
         if (isBusinessSignup && accessCode) {
           const { data: validationData, error: validationError } = await supabase
             .rpc('validate_access_code', {
@@ -69,6 +86,23 @@ export default function Auth() {
 
           if (validationError || !validationData?.[0]?.valid) {
             toast.error(validationData?.[0]?.error_message || "Invalid access code");
+            return;
+          }
+
+          // Create business profile
+          const { error: businessError } = await supabase
+            .from("business_profiles")
+            .insert({
+              user_id: data.user!.id,
+              business_name: businessName,
+              primary_contact_name: contactName,
+              primary_contact_email: contactEmail,
+              primary_contact_phone: contactPhone || null,
+            });
+
+          if (businessError) {
+            toast.error("Failed to create business profile");
+            console.error(businessError);
             return;
           }
 
@@ -108,32 +142,80 @@ export default function Auth() {
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    placeholder="John Doe"
-                  />
-                </div>
-                {isBusinessSignup && (
+                {!isBusinessSignup ? (
                   <div className="space-y-2">
-                    <Label htmlFor="accessCode">Business Access Code</Label>
+                    <Label htmlFor="username">Username (optional)</Label>
                     <Input
-                      id="accessCode"
+                      id="username"
                       type="text"
-                      value={accessCode}
-                      onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                      required
-                      placeholder="ENTER-ACCESS-CODE"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="johndoe"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Get your access code from the pricing page or after subscribing
+                      You can skip this if you prefer not to display a username
                     </p>
                   </div>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="businessName">Business Name</Label>
+                      <Input
+                        id="businessName"
+                        type="text"
+                        value={businessName}
+                        onChange={(e) => setBusinessName(e.target.value)}
+                        required
+                        placeholder="Acme Corporation"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contactName">Primary Contact Name</Label>
+                      <Input
+                        id="contactName"
+                        type="text"
+                        value={contactName}
+                        onChange={(e) => setContactName(e.target.value)}
+                        required
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contactEmail">Primary Contact Email</Label>
+                      <Input
+                        id="contactEmail"
+                        type="email"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
+                        required
+                        placeholder="john@acme.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="contactPhone">Primary Contact Phone (optional)</Label>
+                      <Input
+                        id="contactPhone"
+                        type="tel"
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        placeholder="+1 (555) 123-4567"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="accessCode">Business Access Code</Label>
+                      <Input
+                        id="accessCode"
+                        type="text"
+                        value={accessCode}
+                        onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                        required
+                        placeholder="ENTER-ACCESS-CODE"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Get your access code from the pricing page or after subscribing
+                      </p>
+                    </div>
+                  </>
                 )}
               </>
             )}
