@@ -35,16 +35,16 @@ export const Hero = () => {
           
           {/* Hero headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl leading-tight">
-            Your ultimate crypto wallet.{" "}
+            Gamify Customer Engagement.{" "}
             <span className="text-transparent bg-clip-text bg-gradient-primary">
-              Packed with features
+              Drive Real Results
             </span>{" "}
-            to simplify your crypto journey
+            for your business
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed">
-            Experience seamless transactions, secure storage, and powerful rewards management 
-            all in one place. Built for the future of digital assets.
+            Create engaging quests and challenges for retail, hospitality, and fitness businesses. 
+            Reward customers with tokens, boost engagement, and build lasting loyalty.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 pt-6">

@@ -4,23 +4,23 @@ export const UseCases = () => {
   const features = [
     {
       icon: Wallet,
-      title: "Multi-Chain Support",
-      description: "Manage assets across Bitcoin, Ethereum, and other major blockchains from a single interface",
+      title: "Retail Stores",
+      description: "Create in-store treasure hunts, product discovery quests, and loyalty challenges. Increase foot traffic by 40% and boost average transaction value.",
     },
     {
       icon: ArrowLeftRight,
-      title: "Instant Transactions",
-      description: "Send and receive crypto with lightning-fast processing and minimal fees",
+      title: "Restaurants & Cafes",
+      description: "Launch menu exploration quests, review challenges, and dining milestones. Build a loyal customer base and drive repeat visits with gamified experiences.",
     },
     {
       icon: Lock,
-      title: "Bank-Grade Security",
-      description: "Your private keys are encrypted and stored securely on your device. Never on our servers",
+      title: "Fitness Centers",
+      description: "Design workout challenges, class attendance quests, and health milestones. Boost member retention and create an engaged fitness community.",
     },
     {
       icon: Sparkles,
-      title: "Smart Features",
-      description: "Advanced trading tools, portfolio tracking, and market insights at your fingertips",
+      title: "Hospitality",
+      description: "Engage hotel guests with property exploration, amenity usage quests, and experience rewards. Increase on-site spending and positive reviews.",
     },
   ];
 
@@ -29,10 +29,10 @@ export const UseCases = () => {
       <div className="container px-4 md:px-6">
         <div className="text-center max-w-3xl mx-auto mb-16 animate-fade-up">
           <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Everything you need in one place
+            Target Industries
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground">
-            Experience the most comprehensive crypto wallet designed for modern users
+            Proven engagement solutions driving measurable results across multiple sectors
           </p>
         </div>
 

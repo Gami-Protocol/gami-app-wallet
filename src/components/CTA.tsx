@@ -14,10 +14,10 @@ export const CTA = () => {
             
             <div className="relative z-10">
               <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                Start your crypto journey today
+                Ready to Transform Customer Engagement?
               </h2>
               <p className="text-lg md:text-xl text-foreground/80 mb-8 max-w-2xl mx-auto">
-                Join thousands of users managing their digital assets securely with Gami Protocol
+                Join forward-thinking businesses using gamification to drive loyalty and revenue. Launch your first quest today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 

@@ -3,37 +3,37 @@ import { Shield, Zap, Globe, Coins, TrendingUp, Lock } from "lucide-react";
 export const Features = () => {
   const mainFeatures = [
     {
-      icon: Shield,
-      title: "Why choose Gami as your ultimate crypto companion?",
-      description: "Built with security, simplicity, and innovation at its core. Manage your digital assets with confidence.",
+      icon: Zap,
+      title: "Launch Quests in Minutes",
+      description: "Create engaging challenges for your customers with our intuitive quest builder. Set rewards, difficulty levels, and participation limits tailored to your business goals.",
     },
     {
-      icon: Zap,
-      title: "For newbies",
-      description: "User-friendly interface designed for beginners. Start your crypto journey with ease and confidence.",
+      icon: Coins,
+      title: "Token-Based Reward System",
+      description: "Issue branded tokens to customers who complete quests. Drive repeat visits, increase customer lifetime value, and build a loyal community around your brand.",
     },
   ];
 
   const secondaryFeatures = [
     {
-      icon: Globe,
-      title: "Blockchain Network",
-      description: "Connect to multiple networks seamlessly. Trade, stake, and manage assets across chains.",
-    },
-    {
-      icon: Coins,
-      title: "Explore, create, and trade your digital assets",
-      description: "Access a complete ecosystem for managing your crypto portfolio with powerful tools.",
-    },
-    {
       icon: TrendingUp,
-      title: "Experience the future",
-      description: "Stay ahead with cutting-edge features and real-time market insights.",
+      title: "Real-Time Analytics",
+      description: "Track quest performance, participant engagement, and ROI with comprehensive business dashboards.",
+    },
+    {
+      icon: Globe,
+      title: "Industry-Specific Templates",
+      description: "Pre-built quest templates for retail, restaurants, gyms, and hospitality to get started fast.",
     },
     {
       icon: Lock,
-      title: "Security first",
-      description: "Bank-level encryption and secure storage keep your assets protected 24/7.",
+      title: "Secure & Scalable",
+      description: "Enterprise-grade infrastructure that grows with your business and keeps customer data protected.",
+    },
+    {
+      icon: Shield,
+      title: "Customer Wallet Integration",
+      description: "Seamless wallet experience for your customers to earn, store, and redeem tokens across all quests.",
     },
   ];
 
