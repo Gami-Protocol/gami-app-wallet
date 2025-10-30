@@ -1,21 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from 'react-router-dom';
 import gamiLogo from '@/assets/gami-logo.png';
 
 export const Navbar = () => {
-  const { login, authenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleLaunchApp = () => {
-    if (authenticated) {
-      navigate('/wallet');
-    } else {
-      login();
-      // Navigate to wallet in demo mode too
-      setTimeout(() => navigate('/wallet'), 100);
-    }
+    navigate('/auth');
   };
 
   return (
