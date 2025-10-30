@@ -30,6 +30,7 @@ export const Navbar = () => {
           <div className="hidden md:flex items-center gap-8">
             <a href="#" className="text-sm hover:text-primary transition-colors">HOME</a>
             <a href="#" className="text-sm hover:text-primary transition-colors">ABOUT</a>
+            <a href="/pricing" className="text-sm hover:text-primary transition-colors">PRICING</a>
             <a href="#" className="text-sm hover:text-primary transition-colors">DOCS</a>
             <Button variant="hero" size="sm" onClick={handleLaunchApp}>
               LAUNCH APP

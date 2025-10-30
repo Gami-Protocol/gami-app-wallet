@@ -7,6 +7,7 @@ import { WalletShowcase } from "@/components/WalletShowcase";
 import { UseCases } from "@/components/UseCases";
 import { Tokenomics } from "@/components/Tokenomics";
 import { Roadmap } from "@/components/Roadmap";
+import { PricingCTA } from "@/components/PricingCTA";
 import { CTA } from "@/components/CTA";
 import { Footer } from "@/components/Footer";
 
@@ -21,6 +22,7 @@ const Index = () => {
         <Web2Web3Integration />
         <WalletShowcase />
         <UseCases />
+        <PricingCTA />
         <Tokenomics />
         <Roadmap />
         <CTA />

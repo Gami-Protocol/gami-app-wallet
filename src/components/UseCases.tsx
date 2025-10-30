@@ -1,10 +1,20 @@
-import { Wallet, ArrowLeftRight, Lock, Sparkles } from "lucide-react";
+import { Wallet, ArrowLeftRight, Lock, Sparkles, Gamepad2, Coins, ShoppingBag, Dumbbell, Building2, Plane } from "lucide-react";
 
 export const UseCases = () => {
   const features = [
     {
+      icon: Coins,
+      title: "Crypto Platforms",
+      description: "Drive DeFi protocol adoption with staking quests, trading challenges, and liquidity rewards. Increase TVL and user engagement through gamified on-chain activities.",
+    },
+    {
+      icon: Gamepad2,
+      title: "Gaming Studios",
+      description: "Integrate cross-game quests, achievement systems, and player progression. Build vibrant gaming communities with shared reward pools and competitive leaderboards.",
+    },
+    {
       icon: Wallet,
-      title: "Retail Stores",
+      title: "Retail & E-commerce",
       description: "Create in-store treasure hunts, product discovery quests, and loyalty challenges. Increase foot traffic by 40% and boost average transaction value.",
     },
     {
@@ -13,14 +23,24 @@ export const UseCases = () => {
       description: "Launch menu exploration quests, review challenges, and dining milestones. Build a loyal customer base and drive repeat visits with gamified experiences.",
     },
     {
-      icon: Lock,
-      title: "Fitness Centers",
+      icon: Dumbbell,
+      title: "Fitness & Wellness",
       description: "Design workout challenges, class attendance quests, and health milestones. Boost member retention and create an engaged fitness community.",
     },
     {
-      icon: Sparkles,
-      title: "Hospitality",
+      icon: Plane,
+      title: "Hospitality & Travel",
       description: "Engage hotel guests with property exploration, amenity usage quests, and experience rewards. Increase on-site spending and positive reviews.",
+    },
+    {
+      icon: Building2,
+      title: "Real Estate",
+      description: "Gamify property tours, referral programs, and client engagement. Track milestone achievements and reward successful closings with automated quest systems.",
+    },
+    {
+      icon: ShoppingBag,
+      title: "Fashion & Beauty",
+      description: "Create style challenges, trend discovery quests, and social sharing rewards. Build brand loyalty through exclusive access and personalized gamified experiences.",
     },
   ];
 
@@ -36,7 +56,7 @@ export const UseCases = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {features.map((feature, index) => (
             <div
               key={index}

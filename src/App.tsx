@@ -7,6 +7,7 @@ import { PrivyProvider } from "@/providers/PrivyProvider";
 import Index from "./pages/Index";
 import Wallet from "./pages/Wallet";
 import Auth from "./pages/Auth";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
 // User Portal Pages
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/pricing" element={<Pricing />} />
             
             {/* User Portal Routes */}
             <Route path="/user/dashboard" element={<UserLayout><UserDashboard /></UserLayout>} />
