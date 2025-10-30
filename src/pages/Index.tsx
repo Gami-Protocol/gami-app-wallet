@@ -2,6 +2,7 @@ import { Navbar } from "@/components/Navbar";
 import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { Architecture } from "@/components/Architecture";
+import { Web2Web3Integration } from "@/components/Web2Web3Integration";
 import { WalletShowcase } from "@/components/WalletShowcase";
 import { UseCases } from "@/components/UseCases";
 import { Tokenomics } from "@/components/Tokenomics";
@@ -17,6 +18,7 @@ const Index = () => {
         <Hero />
         <Features />
         <Architecture />
+        <Web2Web3Integration />
         <WalletShowcase />
         <UseCases />
         <Tokenomics />
