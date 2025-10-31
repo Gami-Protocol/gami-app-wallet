@@ -281,10 +281,10 @@ export default function Wallet() {
         description: "Your Privy wallet and avatar have been created",
       });
     } catch (error) {
-      console.error('Wallet generation error:', error);
+      console.error('[INTERNAL] Wallet generation error:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate wallet",
+        description: "Failed to generate wallet. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -328,10 +328,10 @@ export default function Wallet() {
         });
       }
     } catch (error) {
-      console.error('Disconnect error:', error);
+      console.error('[INTERNAL] Disconnect error:', error);
       toast({
         title: "Error",
-        description: "Failed to disconnect wallet",
+        description: "Failed to disconnect wallet. Please try again.",
         variant: "destructive",
       });
     }
@@ -488,7 +488,11 @@ export default function Wallet() {
 
       if (error) throw error;
       if (!data?.[0]?.success) {
-        throw new Error(data?.[0]?.error_message || 'Failed to claim reward');
+        const errorMsg = data?.[0]?.error_message;
+        // Only show safe error messages from server
+        const safeMessages = ['Authentication required', 'Invalid request', 'Invalid reward amount', 'Operation failed', 'Insufficient balance'];
+        const displayMsg = safeMessages.includes(errorMsg) ? errorMsg : 'Unable to complete request';
+        throw new Error(displayMsg);
       }
 
       const { new_xp, new_level } = data[0];
@@ -501,9 +505,10 @@ export default function Wallet() {
         description: `Earned ${quest.reward} XP${new_level > currentLevel ? ` and leveled up to ${new_level}!` : ''}`,
       });
     } catch (error) {
+      console.error("[INTERNAL] Quest claim error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to claim quest reward",
+        description: error instanceof Error ? error.message : "Unable to claim quest reward",
         variant: "destructive",
       });
     }
@@ -528,7 +533,11 @@ export default function Wallet() {
 
       if (error) throw error;
       if (!data?.[0]?.success) {
-        throw new Error(data?.[0]?.error_message || 'Failed to redeem reward');
+        const errorMsg = data?.[0]?.error_message;
+        // Only show safe error messages from server
+        const safeMessages = ['Authentication required', 'Invalid request', 'Insufficient balance'];
+        const displayMsg = safeMessages.includes(errorMsg) ? errorMsg : 'Unable to complete request';
+        throw new Error(displayMsg);
       }
 
       await fetchWalletData();
@@ -538,9 +547,10 @@ export default function Wallet() {
         description: `Successfully claimed: ${name}`,
       });
     } catch (error) {
+      console.error("[INTERNAL] Reward redemption error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to redeem reward",
+        description: error instanceof Error ? error.message : "Unable to redeem reward",
         variant: "destructive",
       });
     }

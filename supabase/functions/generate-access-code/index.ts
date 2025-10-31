@@ -44,27 +44,29 @@ serve(async (req) => {
     
     if (userError || !user) throw new Error("Unauthorized");
 
-    // Check if user is admin
-    const { data: roles } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
+    // Verify admin role server-side
+    const { data: hasAdminAccess } = await supabaseClient
+      .rpc("has_role", { _user_id: user.id, _role: "admin" });
 
-    const isAdmin = roles?.some(r => r.role === "admin");
-    if (!isAdmin) throw new Error("Only admins can generate access codes");
+    if (!hasAdminAccess) {
+      return new Response(
+        JSON.stringify({ error: "Access denied" }),
+        { status: 403, headers: corsHeaders }
+      );
+    }
 
     const { tier, max_uses, expires_in_days } = await req.json();
 
     // Validate tier
     const validTiers = ["starter", "growth", "enterprise", "free"];
     if (!tier || !validTiers.includes(tier)) {
-      throw new Error("Invalid tier. Must be one of: starter, growth, enterprise, free");
+      throw new Error("Invalid request parameters");
     }
 
     // Validate max_uses
     const validatedMaxUses = parseInt(String(max_uses || 1));
     if (isNaN(validatedMaxUses) || validatedMaxUses < 1 || validatedMaxUses > 10000) {
-      throw new Error("max_uses must be between 1 and 10000");
+      throw new Error("Invalid request parameters");
     }
 
     // Validate expires_in_days
@@ -72,7 +74,7 @@ serve(async (req) => {
     if (expires_in_days) {
       const validatedExpireDays = parseInt(String(expires_in_days));
       if (isNaN(validatedExpireDays) || validatedExpireDays < 1 || validatedExpireDays > 3650) {
-        throw new Error("expires_in_days must be between 1 and 3650 (10 years)");
+        throw new Error("Invalid request parameters");
       }
       expiresAt = new Date(Date.now() + validatedExpireDays * 24 * 60 * 60 * 1000).toISOString();
     }
@@ -98,10 +100,12 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
-    });
+    console.error("[INTERNAL] Error generating access code:", error);
+    return new Response(
+      JSON.stringify({
+        error: "Failed to generate access code. Please try again.",
+      }),
+      { status: 500, headers: corsHeaders }
+    );
   }
 });

@@ -309,6 +309,36 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          request_count: number
+          updated_at: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          request_count?: number
+          updated_at?: string
+          user_id?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -444,6 +474,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_max_requests?: number
+          p_window_minutes?: number
+        }
+        Returns: {
+          allowed: boolean
+          error_message: string
+          requests_remaining: number
+        }[]
+      }
       claim_quest_reward: {
         Args: { p_expected_reward: number; p_quest_participant_id: string }
         Returns: {
@@ -485,6 +527,7 @@ export type Database = {
           valid: boolean
         }[]
       }
+      verify_business_access: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "user" | "business" | "admin"

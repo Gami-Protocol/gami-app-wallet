@@ -13,6 +13,9 @@ const logStep = (step: string, details?: any) => {
 };
 
 serve(async (req) => {
+  const startTime = Date.now();
+  const MIN_RESPONSE_TIME = 300; // milliseconds for consistent timing
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -27,21 +30,39 @@ serve(async (req) => {
     logStep("Function started");
 
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+    if (!stripeKey) throw new Error("Configuration error");
     logStep("Stripe key verified");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) throw new Error("Authentication required");
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     logStep("Authenticating user with token");
     
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    if (userError) throw new Error("Authentication failed");
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    if (!user?.email) throw new Error("Authentication required");
+    logStep("User authenticated", { userId: user.id.substring(0, 8) + "..." });
+
+    // Rate limiting check
+    const { data: rateLimitCheck } = await supabaseClient.rpc("check_rate_limit", {
+      p_endpoint: "check-subscription",
+      p_max_requests: 10,
+      p_window_minutes: 1,
+    });
+
+    if (rateLimitCheck && !rateLimitCheck[0]?.allowed) {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < MIN_RESPONSE_TIME) {
+        await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME - elapsed));
+      }
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 429 }
+      );
+    }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -76,18 +97,35 @@ serve(async (req) => {
       logStep("No active subscription found");
     }
 
-    return new Response(JSON.stringify({
+    const result = {
       subscribed: hasActiveSub,
       product_id: productId,
       subscription_end: subscriptionEnd
-    }), {
+    };
+
+    // Ensure consistent response timing
+    const elapsed = Date.now() - startTime;
+    if (elapsed < MIN_RESPONSE_TIME) {
+      await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME - elapsed));
+    }
+
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR in check-subscription", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const errorMessage = error instanceof Error ? error.message : "An error occurred";
+    logStep("[INTERNAL ERROR]", { message: error instanceof Error ? error.message : String(error) });
+    
+    // Ensure consistent response timing even for errors
+    const elapsed = Date.now() - startTime;
+    if (elapsed < MIN_RESPONSE_TIME) {
+      await new Promise(resolve => setTimeout(resolve, MIN_RESPONSE_TIME - elapsed));
+    }
+    
+    return new Response(JSON.stringify({ 
+      error: "Unable to check subscription status. Please try again." 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

@@ -97,45 +97,56 @@ export function BusinessLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
+    const checkAccess = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          navigate("/auth");
+          return;
+        }
+
+        // Server-side verification using RPC
+        const { data: hasBusinessAccess, error } = await supabase
+          .rpc("verify_business_access");
+
+        if (error) {
+          console.error("[INTERNAL] Access verification error:", error);
+          toast.error("Unable to verify access. Please try again.");
+          navigate("/auth");
+          return;
+        }
+
+        if (!hasBusinessAccess) {
+          toast.error("Access denied.");
+          navigate("/user/dashboard");
+          return;
+        }
+
+        setIsAuthenticated(true);
+        setHasAccess(true);
+      } catch (error) {
+        console.error("[INTERNAL] Access check error:", error);
+        toast.error("An error occurred. Please try again.");
         navigate("/auth");
-        return;
       }
-
-      // Check if user has business or admin role
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
-
-      const hasBusinessAccess = roles?.some(
-        r => r.role === "business" || r.role === "admin"
-      );
-
-      if (!hasBusinessAccess) {
-        toast.error("Access denied. Business portal requires business role.");
-        navigate("/user/dashboard");
-        return;
-      }
-
-      setIsAuthenticated(true);
-      setHasAccess(true);
     };
 
-    checkAuth();
+    checkAccess();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!session) {
-        navigate("/auth");
-      } else {
-        checkAuth();
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "SIGNED_OUT" || !session) {
+          navigate("/auth");
+        } else {
+          checkAccess();
+        }
       }
-    });
+    );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [navigate]);
 
   if (!isAuthenticated || !hasAccess) return null;

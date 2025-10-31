@@ -122,8 +122,8 @@ export default function Auth() {
             });
 
           if (businessError) {
-            toast.error("Failed to create business profile");
-            console.error(businessError);
+            console.error("[INTERNAL] Business profile creation error:", businessError);
+            toast.error("Failed to create business account. Please try again.");
             return;
           }
 
@@ -136,7 +136,7 @@ export default function Auth() {
             });
 
           if (roleError) {
-            console.error("Role assignment error:", roleError);
+            console.error("[INTERNAL] Role assignment error:", roleError);
           }
 
           // If they have an access code, validate it for free tier
@@ -148,7 +148,11 @@ export default function Auth() {
               });
 
             if (validationError || !validationData?.[0]?.valid) {
-              toast.error(validationData?.[0]?.error_message || "Invalid access code");
+              const errorMsg = validationData?.[0]?.error_message;
+              // Only show safe error messages
+              const safeMessages = ['Invalid access code', 'Access code has expired', 'Access code has reached maximum uses', 'You have already used this access code'];
+              const displayMsg = safeMessages.includes(errorMsg) ? errorMsg : 'Invalid access code';
+              toast.error(displayMsg);
             } else {
               toast.success(`Business account created with access code!`);
               navigate("/business/dashboard");
@@ -181,7 +185,8 @@ export default function Auth() {
         }
       }
     } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+      console.error("[INTERNAL] Auth error:", error);
+      toast.error("Authentication failed. Please try again.");
     } finally {
       setLoading(false);
     }

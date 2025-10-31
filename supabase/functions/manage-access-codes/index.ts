@@ -22,18 +22,15 @@ serve(async (req) => {
     if (!authHeader) throw new Error("No authorization header");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-    
+    const { data: user, error: userError } = await supabaseClient.auth.getUser(token);
     if (userError || !user) throw new Error("Unauthorized");
 
-    // Check if user is admin
-    const { data: roles } = await supabaseClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
+    const { data: hasAdminAccess } = await supabaseClient
+      .rpc("has_role", { _user_id: user.user.id, _role: "admin" });
 
-    const isAdmin = roles?.some(r => r.role === "admin");
-    if (!isAdmin) throw new Error("Only admins can manage access codes");
+    if (!hasAdminAccess) {
+      throw new Error("Access denied");
+    }
 
     const { action, code_id } = await req.json();
 
@@ -56,7 +53,7 @@ serve(async (req) => {
     }
 
     if (action === "deactivate") {
-      if (!code_id) throw new Error("code_id required");
+      if (!code_id) throw new Error("Invalid request");
 
       const { error } = await supabaseClient
         .from("access_codes")
@@ -72,7 +69,7 @@ serve(async (req) => {
     }
 
     if (action === "activate") {
-      if (!code_id) throw new Error("code_id required");
+      if (!code_id) throw new Error("Invalid request");
 
       const { error } = await supabaseClient
         .from("access_codes")
@@ -89,10 +86,10 @@ serve(async (req) => {
 
     throw new Error("Invalid action");
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 400,
-    });
+    console.error("[INTERNAL] Error:", error);
+    return new Response(
+      JSON.stringify({ error: "An error occurred. Please try again." }),
+      { status: 500, headers: corsHeaders }
+    );
   }
 });
