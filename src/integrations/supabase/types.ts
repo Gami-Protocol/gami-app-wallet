@@ -160,6 +160,30 @@ export type Database = {
         }
         Relationships: []
       }
+      partnership_waitlist: {
+        Row: {
+          company_name: string
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

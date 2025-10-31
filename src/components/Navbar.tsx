@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import gamiLogo from '@/assets/gami-logo.png';
+import { PartnershipWaitlist } from "@/components/PartnershipWaitlist";
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export const Navbar = () => {
             <a href="/#features" className="text-sm hover:text-primary transition-colors">FEATURES</a>
             <a href="/pricing" className="text-sm hover:text-primary transition-colors">PRICING</a>
             <a href="/#roadmap" className="text-sm hover:text-primary transition-colors">ROADMAP</a>
+            <PartnershipWaitlist variant="outline" size="sm" />
             <Button variant="hero" size="sm" onClick={handleLaunchApp}>
               LAUNCH APP
             </Button>
