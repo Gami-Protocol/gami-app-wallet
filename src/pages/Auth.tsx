@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import gamiLogo from '@/assets/gami-logo.png';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Home } from "lucide-react";
 
 const BUSINESS_TIERS = {
   starter: {
@@ -187,23 +188,35 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4">
-          <div className="flex justify-center">
-            <img src={gamiLogo} alt="Gami Protocol" className="h-12 w-auto" />
-          </div>
-          <CardTitle className="text-2xl text-center">
-            {isLogin ? "Welcome Back" : isBusinessSignup ? "Business Signup" : "Create Account"}
-          </CardTitle>
-          <CardDescription className="text-center">
-            {isLogin
-              ? "Sign in to access your wallet and quests"
-              : isBusinessSignup
-              ? "Create a business account with your access code"
-              : "Join Gami Protocol and start earning rewards"}
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="p-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="gap-2"
+        >
+          <Home className="h-4 w-4" />
+          Back to Home
+        </Button>
+      </div>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-4">
+            <div className="flex justify-center">
+              <img src={gamiLogo} alt="Gami Protocol" className="h-12 w-auto" />
+            </div>
+            <CardTitle className="text-2xl text-center">
+              {isLogin ? "Welcome Back" : isBusinessSignup ? "Business Signup" : "Create Account"}
+            </CardTitle>
+            <CardDescription className="text-center">
+              {isLogin
+                ? "Sign in to access your wallet and quests"
+                : isBusinessSignup
+                ? "Create a business account with your access code"
+                : "Join Gami Protocol and start earning rewards"}
+            </CardDescription>
+          </CardHeader>
         <CardContent>
           <form onSubmit={handleAuth} className="space-y-4">
             {!isLogin && (
@@ -357,6 +370,7 @@ export default function Auth() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

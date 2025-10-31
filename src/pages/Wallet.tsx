@@ -19,7 +19,9 @@ import {
   Copy,
   RefreshCw,
   Link as LinkIcon,
-  Unplug
+  Unplug,
+  Home,
+  ArrowLeft
 } from 'lucide-react';
 import { 
   calculateLevel, 
@@ -462,6 +464,24 @@ export default function Wallet() {
               <span className="font-typewriter font-bold text-xl">Gami Wallet</span>
             </div>
             <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate("/")}
+                className="gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Exit to Home
+              </Button>
               {walletData?.wallet_address && (
                 <Button 
                   variant="ghost" 

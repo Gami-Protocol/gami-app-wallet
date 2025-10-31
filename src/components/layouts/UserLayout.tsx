@@ -8,6 +8,8 @@ import {
   Trophy,
   User,
   LogOut,
+  Home,
+  ArrowLeft,
 } from "lucide-react";
 import {
   Sidebar,
@@ -118,8 +120,28 @@ export function UserLayout({ children }: { children: ReactNode }) {
       <div className="min-h-screen flex w-full">
         <UserSidebar />
         <main className="flex-1 overflow-auto">
-          <header className="sticky top-0 z-10 flex h-14 items-center border-b bg-background/95 backdrop-blur px-4">
+          <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/95 backdrop-blur px-4">
             <SidebarTrigger />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/")}
+                className="gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Exit to Home
+              </Button>
+            </div>
           </header>
           <div className="p-6">{children}</div>
         </main>
