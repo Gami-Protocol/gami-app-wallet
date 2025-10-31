@@ -7,6 +7,31 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import gamiLogo from '@/assets/gami-logo.png';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+const BUSINESS_TIERS = {
+  starter: {
+    name: "Starter",
+    price: "$49/month",
+    priceId: "price_1SO3fALyzH8oCVgKZZMXQA7Q",
+    productId: "prod_TKj78w1nS9wYGQ",
+    features: ["Up to 10 quests/month", "Basic analytics", "Email support"],
+  },
+  growth: {
+    name: "Growth",
+    price: "$149/month",
+    priceId: "price_1SO3fQLyzH8oCVgK5Tshnpwx",
+    productId: "prod_TKj7lUhvPzeGc5",
+    features: ["Unlimited quests", "Advanced analytics", "Priority support"],
+  },
+  enterprise: {
+    name: "Enterprise",
+    price: "$499/month",
+    priceId: "price_1SO3fuLyzH8oCVgKZbbOxU3O",
+    productId: "prod_TKj8EGDpUaINKq",
+    features: ["White-label options", "Dedicated support", "Custom integrations"],
+  },
+};
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +41,7 @@ export default function Auth() {
   const [accessCode, setAccessCode] = useState("");
   const [isBusinessSignup, setIsBusinessSignup] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedTier, setSelectedTier] = useState<keyof typeof BUSINESS_TIERS>("starter");
   
   // Business-specific fields
   const [businessName, setBusinessName] = useState("");
@@ -76,16 +102,10 @@ export default function Auth() {
             .eq("id", data.user.id);
         }
 
-        // If business signup, validate access code and create business profile
-        if (isBusinessSignup && accessCode) {
-          const { data: validationData, error: validationError } = await supabase
-            .rpc('validate_access_code', {
-              p_code: accessCode,
-              p_user_id: data.user!.id
-            });
-
-          if (validationError || !validationData?.[0]?.valid) {
-            toast.error(validationData?.[0]?.error_message || "Invalid access code");
+        // If business signup with subscription
+        if (isBusinessSignup) {
+          if (!businessName || !contactName || !contactEmail) {
+            toast.error("Please fill in all required business information");
             return;
           }
 
@@ -106,7 +126,53 @@ export default function Auth() {
             return;
           }
 
-          toast.success(`Business account created with ${validationData[0].tier} tier!`);
+          // Assign business role
+          const { error: roleError } = await supabase
+            .from("user_roles")
+            .insert({
+              user_id: data.user!.id,
+              role: 'business'
+            });
+
+          if (roleError) {
+            console.error("Role assignment error:", roleError);
+          }
+
+          // If they have an access code, validate it for free tier
+          if (accessCode) {
+            const { data: validationData, error: validationError } = await supabase
+              .rpc('validate_access_code', {
+                p_code: accessCode,
+                p_user_id: data.user!.id
+              });
+
+            if (validationError || !validationData?.[0]?.valid) {
+              toast.error(validationData?.[0]?.error_message || "Invalid access code");
+            } else {
+              toast.success(`Business account created with access code!`);
+              navigate("/business/dashboard");
+              return;
+            }
+          }
+
+          // Otherwise, redirect to checkout for subscription
+          toast.success("Account created! Redirecting to checkout...");
+          
+          const { data: sessionData, error: checkoutError } = await supabase.functions.invoke(
+            'create-checkout',
+            {
+              body: { priceId: BUSINESS_TIERS[selectedTier].priceId }
+            }
+          );
+
+          if (checkoutError || !sessionData?.url) {
+            toast.error("Failed to create checkout session. Please contact support.");
+            navigate("/business/dashboard");
+            return;
+          }
+
+          // Open checkout in new tab
+          window.open(sessionData.url, '_blank');
           navigate("/business/dashboard");
         } else {
           toast.success("Account created successfully!");
@@ -158,6 +224,25 @@ export default function Auth() {
                   </div>
                 ) : (
                   <>
+                    <div className="space-y-4 p-4 border rounded-lg bg-muted/50">
+                      <h3 className="font-semibold">Choose Your Plan</h3>
+                      <RadioGroup value={selectedTier} onValueChange={(value) => setSelectedTier(value as keyof typeof BUSINESS_TIERS)}>
+                        {Object.entries(BUSINESS_TIERS).map(([key, tier]) => (
+                          <div key={key} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-background cursor-pointer">
+                            <RadioGroupItem value={key} id={key} className="mt-1" />
+                            <Label htmlFor={key} className="flex-1 cursor-pointer">
+                              <div className="font-semibold">{tier.name} - {tier.price}</div>
+                              <ul className="text-sm text-muted-foreground mt-1">
+                                {tier.features.map((feature, idx) => (
+                                  <li key={idx}>• {feature}</li>
+                                ))}
+                              </ul>
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="businessName">Business Name</Label>
                       <Input
@@ -202,17 +287,16 @@ export default function Auth() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="accessCode">Business Access Code</Label>
+                      <Label htmlFor="accessCode">Access Code (optional)</Label>
                       <Input
                         id="accessCode"
                         type="text"
                         value={accessCode}
                         onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                        required
                         placeholder="ENTER-ACCESS-CODE"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Get your access code from the pricing page or after subscribing
+                        Have an access code? Enter it to skip payment
                       </p>
                     </div>
                   </>
