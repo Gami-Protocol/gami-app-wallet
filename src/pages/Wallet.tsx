@@ -12,14 +12,14 @@ import {
   Trophy, 
   Target, 
   Gift, 
-  LogOut,
   Wallet as WalletIcon,
   Zap,
   Shield,
   Sparkles,
   Copy,
   RefreshCw,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Unplug
 } from 'lucide-react';
 import { 
   calculateLevel, 
@@ -59,8 +59,10 @@ export default function Wallet() {
     ready: privyReady, 
     authenticated: privyAuthenticated, 
     login: privyLogin, 
+    logout: privyLogout,
     user: privyUser, 
     linkWallet,
+    unlinkWallet,
     createWallet
   } = usePrivy();
 
@@ -252,9 +254,38 @@ export default function Wallet() {
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/auth');
+  const handleDisconnectWallet = async () => {
+    try {
+      if (privyAuthenticated && privyUser?.wallet) {
+        // Disconnect the Privy wallet
+        await unlinkWallet(privyUser.wallet.address);
+        
+        // Clear wallet address from Supabase
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser) {
+          await supabase
+            .from('wallets')
+            .update({ wallet_address: null })
+            .eq('user_id', authUser.id);
+        }
+        
+        setWalletData(prev => prev ? { ...prev, wallet_address: null } : null);
+        setEmbeddedWallet(null);
+        setExternalWallet(null);
+        
+        toast({
+          title: "Wallet Disconnected",
+          description: "You can now connect a new wallet",
+        });
+      }
+    } catch (error) {
+      console.error('Disconnect error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to disconnect wallet",
+        variant: "destructive",
+      });
+    }
   };
 
   // Connect external wallet via Privy
@@ -431,9 +462,17 @@ export default function Wallet() {
               <span className="font-typewriter font-bold text-xl">Gami Wallet</span>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                <LogOut className="h-5 w-5" />
-              </Button>
+              {walletData?.wallet_address && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleDisconnectWallet}
+                  className="gap-2"
+                >
+                  <Unplug className="h-4 w-4" />
+                  Disconnect Wallet
+                </Button>
+              )}
             </div>
           </div>
         </div>

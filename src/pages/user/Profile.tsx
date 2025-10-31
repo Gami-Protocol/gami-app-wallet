@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 export default function UserProfile() {
   const [profile, setProfile] = useState<any>(null);
-  const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function UserProfile() {
           .eq("id", user.id)
           .single();
         setProfile(data);
-        setFullName(data?.full_name || "");
+        setUsername(data?.username || "");
       }
     };
     fetchProfile();
@@ -37,7 +37,7 @@ export default function UserProfile() {
 
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName })
+        .update({ username: username })
         .eq("id", user.id);
 
       if (error) throw error;
@@ -76,11 +76,11 @@ export default function UserProfile() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             <Button type="submit" disabled={loading}>
