@@ -55,7 +55,14 @@ interface AirdropAllocation {
 export default function Wallet() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { ready: privyReady, authenticated: privyAuthenticated, login: privyLogin, user: privyUser, linkWallet } = usePrivy();
+  const { 
+    ready: privyReady, 
+    authenticated: privyAuthenticated, 
+    login: privyLogin, 
+    user: privyUser, 
+    linkWallet,
+    createWallet
+  } = usePrivy();
 
   // State management
   const [loading, setLoading] = useState(true);
@@ -64,6 +71,7 @@ export default function Wallet() {
   const [airdropData, setAirdropData] = useState<AirdropAllocation | null>(null);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [generatingWallet, setGeneratingWallet] = useState(false);
+  const [embeddedWallet, setEmbeddedWallet] = useState<string | null>(null);
   const [externalWallet, setExternalWallet] = useState<string | null>(null);
 
   // Check Supabase authentication
@@ -86,10 +94,18 @@ export default function Wallet() {
     };
   }, []);
 
-  // Check for external wallet connection via Privy
+  // Check for Privy wallet connections
   useEffect(() => {
-    if (privyAuthenticated && privyUser?.wallet?.address) {
-      setExternalWallet(privyUser.wallet.address);
+    if (privyAuthenticated && privyUser?.wallet) {
+      const wallet = privyUser.wallet;
+      
+      // Check if it's an embedded wallet (created by Privy)
+      if (wallet.walletClientType === 'privy') {
+        setEmbeddedWallet(wallet.address);
+      } else {
+        // External wallet (MetaMask, Coinbase, etc.)
+        setExternalWallet(wallet.address);
+      }
     }
   }, [privyAuthenticated, privyUser]);
 
@@ -177,30 +193,47 @@ export default function Wallet() {
     }
   };
 
-  // Generate wallet address
+  // Generate wallet address using Privy
   const generateWallet = async () => {
     if (!authenticated) return;
     
     setGeneratingWallet(true);
     try {
-      const { data, error } = await supabase.rpc('generate_wallet_address');
-
-      if (error) throw error;
-      if (!data?.[0]?.success) {
-        throw new Error(data?.[0]?.error_message || 'Failed to generate wallet');
+      // If not logged into Privy, sign in first
+      if (!privyAuthenticated) {
+        await privyLogin();
+      }
+      
+      // Create embedded wallet via Privy
+      const wallet = await createWallet();
+      
+      if (!wallet?.address) {
+        throw new Error('Failed to create wallet');
       }
 
-      const walletAddress = data[0].wallet_address;
-      setWalletData(prev => prev ? { ...prev, wallet_address: walletAddress } : null);
+      // Store wallet address in Supabase
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) throw new Error('Not authenticated');
+
+      const { error: updateError } = await supabase
+        .from('wallets')
+        .update({ wallet_address: wallet.address })
+        .eq('user_id', authUser.id);
+
+      if (updateError) throw updateError;
+
+      setWalletData(prev => prev ? { ...prev, wallet_address: wallet.address } : null);
+      setEmbeddedWallet(wallet.address);
       
       toast({
         title: "Wallet Generated! 🎉",
-        description: "Your unique wallet address has been created",
+        description: "Your Privy wallet has been created",
       });
     } catch (error) {
+      console.error('Wallet generation error:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate wallet address",
+        description: error instanceof Error ? error.message : "Failed to generate wallet",
         variant: "destructive",
       });
     } finally {
@@ -228,9 +261,16 @@ export default function Wallet() {
   const connectExternalWallet = async () => {
     try {
       if (!privyAuthenticated) {
+        // Sign in to Privy first
         await privyLogin();
       } else {
+        // Link an external wallet (MetaMask, Coinbase, etc.)
         await linkWallet();
+        
+        toast({
+          title: "Wallet Connected! 🔗",
+          description: "External wallet has been linked",
+        });
       }
     } catch (error) {
       console.error('Wallet connection error:', error);
@@ -407,34 +447,45 @@ export default function Wallet() {
               <div className="text-center space-y-4">
                 <WalletIcon className="h-12 w-12 mx-auto text-primary" />
                 <div>
-                  <h3 className="font-bold text-xl mb-2">Generate Your Wallet</h3>
+                  <h3 className="font-bold text-xl mb-2">Create Your Wallet</h3>
                   <p className="text-muted-foreground">
-                    Create a unique wallet address to start your journey
+                    Generate a secure Privy wallet to manage your assets
                   </p>
                 </div>
                 <Button 
                   onClick={generateWallet} 
-                  disabled={generatingWallet}
+                  disabled={generatingWallet || !privyReady}
                   size="lg"
                   className="gap-2"
                 >
                   {generatingWallet ? (
                     <>
                       <RefreshCw className="h-5 w-5 animate-spin" />
-                      Generating...
+                      Creating Wallet...
                     </>
                   ) : (
                     <>
                       <Sparkles className="h-5 w-5" />
-                      Generate Wallet
+                      Create Privy Wallet
                     </>
                   )}
                 </Button>
+                <p className="text-xs text-muted-foreground">
+                  Powered by Privy - Secure, self-custodial wallet
+                </p>
               </div>
             ) : (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-muted-foreground">Your Gami Wallet</p>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Your Wallet</p>
+                    {embeddedWallet && (
+                      <Badge variant="secondary" className="mt-1 text-xs">
+                        <Shield className="h-3 w-3 mr-1" />
+                        Privy Embedded
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 mb-4">
                   <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg flex-1">
@@ -453,17 +504,18 @@ export default function Wallet() {
                 <div>
                   <p className="text-sm font-medium mb-1">External Wallet</p>
                   <p className="text-xs text-muted-foreground">
-                    Connect MetaMask, Coinbase, or other wallets
+                    Connect MetaMask, Coinbase, WalletConnect
                   </p>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={connectExternalWallet}
+                  disabled={!privyReady}
                   className="gap-2"
                 >
                   <LinkIcon className="h-4 w-4" />
-                  {externalWallet ? 'Change' : 'Connect'}
+                  {externalWallet ? 'Manage' : 'Connect'}
                 </Button>
               </div>
               {externalWallet && (
@@ -471,7 +523,7 @@ export default function Wallet() {
                   <Badge variant="secondary" className="font-mono text-xs">
                     {externalWallet.slice(0, 6)}...{externalWallet.slice(-4)}
                   </Badge>
-                  <span className="text-xs text-muted-foreground">Connected</span>
+                  <Badge variant="outline" className="text-xs">Connected</Badge>
                 </div>
               )}
             </div>
