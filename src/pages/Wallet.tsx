@@ -89,6 +89,14 @@ export default function Wallet() {
         fetchQuests();
       } else {
         setAuthenticated(false);
+        // Check if user is authenticated via Privy but not Supabase
+        if (privyAuthenticated && privyUser?.email) {
+          // User is authenticated via Privy, suggest linking accounts
+          toast({
+            title: "Account Linking Available",
+            description: "Link your wallet to email authentication for full features",
+          });
+        }
         setLoading(false);
       }
     });
@@ -96,22 +104,43 @@ export default function Wallet() {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
-
-  // Check for Privy wallet connections
-  useEffect(() => {
-    if (privyAuthenticated && privyUser?.wallet) {
-      const wallet = privyUser.wallet;
-      
-      // Check if it's an embedded wallet (created by Privy)
-      if (wallet.walletClientType === 'privy') {
-        setEmbeddedWallet(wallet.address);
-      } else {
-        // External wallet (MetaMask, Coinbase, etc.)
-        setExternalWallet(wallet.address);
-      }
-    }
   }, [privyAuthenticated, privyUser]);
+
+  // Check for Privy wallet connections and sync with Supabase
+  useEffect(() => {
+    const syncPrivyWallet = async () => {
+      if (privyAuthenticated && privyUser?.wallet && authenticated) {
+        const wallet = privyUser.wallet;
+        
+        // Check if it's an embedded wallet (created by Privy)
+        if (wallet.walletClientType === 'privy') {
+          setEmbeddedWallet(wallet.address);
+        } else {
+          // External wallet (MetaMask, Coinbase, etc.)
+          setExternalWallet(wallet.address);
+        }
+
+        // Sync wallet address with Supabase if not already saved
+        if (walletData && !walletData.wallet_address) {
+          try {
+            const { data: { user: authUser } } = await supabase.auth.getUser();
+            if (authUser) {
+              await supabase
+                .from('wallets')
+                .update({ wallet_address: wallet.address })
+                .eq('user_id', authUser.id);
+              
+              setWalletData(prev => prev ? { ...prev, wallet_address: wallet.address } : null);
+            }
+          } catch (error) {
+            console.error('Error syncing wallet:', error);
+          }
+        }
+      }
+    };
+
+    syncPrivyWallet();
+  }, [privyAuthenticated, privyUser, authenticated, walletData]);
 
   const checkAuth = async () => {
     try {
@@ -319,22 +348,68 @@ export default function Wallet() {
   if (!loading && !authenticated) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-lg w-full">
           <CardHeader>
             <CardTitle className="text-center flex items-center justify-center gap-2">
               <WalletIcon className="h-6 w-6" />
               Access Your Wallet
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <p className="text-center text-muted-foreground">
               Sign in to access your gamified wallet and start earning XP!
             </p>
-            <Button onClick={() => navigate('/auth')} className="w-full" size="lg">
-              <Shield className="mr-2 h-5 w-5" />
-              Sign In
-            </Button>
-            <div className="text-center text-sm text-muted-foreground">
+            
+            <div className="space-y-4">
+              {/* Email Sign In */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">Email Authentication</h3>
+                <Button onClick={() => navigate('/auth')} className="w-full" size="lg">
+                  <Shield className="mr-2 h-5 w-5" />
+                  Sign In with Email
+                </Button>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or connect wallet</span>
+                </div>
+              </div>
+
+              {/* External Wallet Connection */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-sm">Web3 Wallet</h3>
+                <Button 
+                  onClick={async () => {
+                    try {
+                      await privyLogin();
+                      toast({
+                        title: "Wallet Connected! 🎉",
+                        description: "Connecting to your account...",
+                      });
+                    } catch (error) {
+                      toast({
+                        title: "Connection Failed",
+                        description: "Failed to connect wallet",
+                        variant: "destructive",
+                      });
+                    }
+                  }} 
+                  variant="outline" 
+                  className="w-full" 
+                  size="lg"
+                  disabled={!privyReady}
+                >
+                  <LinkIcon className="mr-2 h-5 w-5" />
+                  Connect External Wallet
+                </Button>
+              </div>
+            </div>
+
+            <div className="text-center text-sm text-muted-foreground pt-2">
               New users automatically get a wallet and 100 base airdrop allocation
             </div>
           </CardContent>
