@@ -4,7 +4,8 @@
 
 Gami Protocol unifies XP, rewards, and AI-driven engagement across apps, games, and blockchains. A comprehensive gamification platform that bridges Web2 and Web3 experiences.
 
-![Gami Protocol](https://c8a70b11-cf73-4090-8c2a-4e214504d79e.lovableproject.com/gami-logo.png)
+
+https://gamiprotocol.xyz/
 
 ## ✨ Features
 
@@ -56,35 +57,6 @@ Gami Protocol unifies XP, rewards, and AI-driven engagement across apps, games, 
 ### Prerequisites
 - Node.js (v18 or higher)
 - npm or yarn
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <YOUR_GIT_URL>
-
-# Navigate to project directory
-cd <YOUR_PROJECT_NAME>
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-The app will be available at `http://localhost:8080`
-
-### Environment Variables
-
-The following environment variables are automatically configured via Lovable Cloud:
-
-```env
-VITE_SUPABASE_URL=<your-supabase-url>
-VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
-VITE_SUPABASE_PROJECT_ID=<your-project-id>
-VITE_PRIVY_APP_ID=<your-privy-app-id>
-```
 
 ## 📁 Project Structure
 
@@ -151,44 +123,9 @@ When users create a wallet, an AI-generated character avatar is automatically cr
 - **Secure wallet integration** via Privy
 - **Environment variables** for sensitive data
 
-## 🚢 Deployment
-
-### Deploy with Lovable
-1. Open your project in [Lovable](https://lovable.dev)
-2. Click **Share** → **Publish**
-3. Your app is live!
-
-### Custom Domain
-Connect your custom domain:
-1. Go to **Project** → **Settings** → **Domains**
-2. Click **Connect Domain**
-3. Follow the DNS configuration steps
-
-## 📚 Documentation
-
-- [Lovable Documentation](https://docs.lovable.dev/)
-- [Supabase Documentation](https://supabase.com/docs)
-- [Privy Documentation](https://docs.privy.io/)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-
-## 🤝 Contributing
-
-This project is built with Lovable. To contribute:
-
-1. Make changes via [Lovable editor](https://lovable.dev/projects/c8a70b11-cf73-4090-8c2a-4e214504d79e)
-2. Or clone the repo and push changes
-3. All changes sync bidirectionally with Lovable
-
-## 📄 License
-
-This project is built with Lovable and follows standard licensing practices.
 
 ## 🆘 Support
 
-- **Discord**: [Join Lovable Community](https://discord.com/channels/1119885301872070706/1280461670979993613)
-- **Documentation**: [docs.lovable.dev](https://docs.lovable.dev)
-- **Email**: support@lovable.dev
+- **Discord**: https://discord.gg/WzsZpqGy7j
+- **Email**: info@gamiprotocol.xyz
 
----
-
-**Built with ❤️ using [Lovable](https://lovable.dev)**
