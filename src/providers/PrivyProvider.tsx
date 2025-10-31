@@ -2,11 +2,10 @@ import { PrivyProvider as Privy } from '@privy-io/react-auth';
 import { ReactNode } from 'react';
 
 export const PrivyProvider = ({ children }: { children: ReactNode }) => {
-  const appId = import.meta.env.VITE_PRIVY_APP_ID as string | undefined;
+  const appId = import.meta.env.VITE_PRIVY_APP_ID as string;
 
-  // Always provide the context, but conditionally initialize Privy
   if (!appId) {
-    console.warn('[Privy] Missing VITE_PRIVY_APP_ID. Running in demo mode.');
+    console.error('[Privy] VITE_PRIVY_APP_ID is required but not found in environment variables');
     return <>{children}</>;
   }
 
@@ -17,8 +16,12 @@ export const PrivyProvider = ({ children }: { children: ReactNode }) => {
         appearance: {
           theme: 'dark',
           accentColor: '#6B4EFF',
+          logo: 'https://c8a70b11-cf73-4090-8c2a-4e214504d79e.lovableproject.com/gami-logo.png',
         },
-        loginMethods: ['email', 'google', 'wallet'],
+        loginMethods: ['wallet', 'email', 'google'],
+        embeddedWallets: {
+          showWalletUIs: true,
+        },
       }}
     >
       {children}
