@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { usePrivy } from '@privy-io/react-auth';
@@ -45,6 +46,7 @@ interface WalletData {
   xp: number;
   level: number;
   wallet_address: string | null;
+  avatar_url: string | null;
 }
 
 interface AirdropAllocation {
@@ -164,7 +166,7 @@ export default function Wallet() {
       if (!authUser) return;
 
       const [walletRes, airdropRes] = await Promise.all([
-        supabase.from('wallets').select('xp, level, wallet_address').eq('user_id', authUser.id).single(),
+        supabase.from('wallets').select('xp, level, wallet_address, avatar_url').eq('user_id', authUser.id).single(),
         supabase.from('airdrop_allocations').select('*').eq('user_id', authUser.id).maybeSingle()
       ]);
 
@@ -244,23 +246,39 @@ export default function Wallet() {
         throw new Error('Failed to create wallet');
       }
 
-      // Store wallet address in Supabase
+      // Generate avatar
+      const { data: avatarData, error: avatarError } = await supabase.functions.invoke('generate-avatar', {
+        body: { walletAddress: wallet.address }
+      });
+
+      if (avatarError) {
+        console.error('Avatar generation error:', avatarError);
+      }
+
+      // Store wallet address and avatar in Supabase
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Not authenticated');
 
       const { error: updateError } = await supabase
         .from('wallets')
-        .update({ wallet_address: wallet.address })
+        .update({ 
+          wallet_address: wallet.address,
+          avatar_url: avatarData?.avatarUrl || null
+        })
         .eq('user_id', authUser.id);
 
       if (updateError) throw updateError;
 
-      setWalletData(prev => prev ? { ...prev, wallet_address: wallet.address } : null);
+      setWalletData(prev => prev ? { 
+        ...prev, 
+        wallet_address: wallet.address,
+        avatar_url: avatarData?.avatarUrl || null
+      } : null);
       setEmbeddedWallet(wallet.address);
       
       toast({
         title: "Wallet Generated! 🎉",
-        description: "Your Privy wallet has been created",
+        description: "Your Privy wallet and avatar have been created",
       });
     } catch (error) {
       console.error('Wallet generation error:', error);
@@ -532,10 +550,19 @@ export default function Wallet() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-50">
-        <div className="container px-4 py-4">
+          <div className="container px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-primary" />
+              {walletData?.avatar_url ? (
+                <Avatar className="w-10 h-10 border-2 border-primary">
+                  <AvatarImage src={walletData.avatar_url} alt="Wallet Avatar" />
+                  <AvatarFallback>
+                    <div className="w-full h-full rounded-xl bg-gradient-primary" />
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-gradient-primary" />
+              )}
               <span className="font-typewriter font-bold text-xl">Gami Wallet</span>
             </div>
             <div className="flex items-center gap-4">

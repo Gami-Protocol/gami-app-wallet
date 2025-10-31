@@ -402,6 +402,7 @@ export type Database = {
       }
       wallets: {
         Row: {
+          avatar_url: string | null
           balance: number
           created_at: string
           id: string
@@ -413,6 +414,7 @@ export type Database = {
           xp: number
         }
         Insert: {
+          avatar_url?: string | null
           balance?: number
           created_at?: string
           id?: string
@@ -424,6 +426,7 @@ export type Database = {
           xp?: number
         }
         Update: {
+          avatar_url?: string | null
           balance?: number
           created_at?: string
           id?: string
