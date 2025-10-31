@@ -1,4 +1,3 @@
-import { useAuth } from '@/hooks/use-auth';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { usePrivy } from '@privy-io/react-auth';
 import { 
   Trophy, 
   Target, 
@@ -19,7 +18,8 @@ import {
   Shield,
   Sparkles,
   Copy,
-  RefreshCw
+  RefreshCw,
+  Link as LinkIcon
 } from 'lucide-react';
 import { 
   calculateLevel, 
@@ -53,26 +53,61 @@ interface AirdropAllocation {
 }
 
 export default function Wallet() {
-  const { ready, authenticated, user, logout, login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { ready: privyReady, authenticated: privyAuthenticated, login: privyLogin, user: privyUser, linkWallet } = usePrivy();
 
   // State management
   const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [airdropData, setAirdropData] = useState<AirdropAllocation | null>(null);
   const [quests, setQuests] = useState<Quest[]>([]);
   const [generatingWallet, setGeneratingWallet] = useState(false);
+  const [externalWallet, setExternalWallet] = useState<string | null>(null);
 
-  // Fetch wallet data
+  // Check Supabase authentication
   useEffect(() => {
-    if (authenticated && user) {
-      fetchWalletData();
-      fetchQuests();
-    } else if (ready && !authenticated) {
+    checkAuth();
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setAuthenticated(true);
+        fetchWalletData();
+        fetchQuests();
+      } else {
+        setAuthenticated(false);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Check for external wallet connection via Privy
+  useEffect(() => {
+    if (privyAuthenticated && privyUser?.wallet?.address) {
+      setExternalWallet(privyUser.wallet.address);
+    }
+  }, [privyAuthenticated, privyUser]);
+
+  const checkAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setAuthenticated(true);
+        await fetchWalletData();
+        await fetchQuests();
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Auth check error:', error);
       setLoading(false);
     }
-  }, [authenticated, user, ready]);
+  };
 
   const fetchWalletData = async () => {
     try {
@@ -144,7 +179,7 @@ export default function Wallet() {
 
   // Generate wallet address
   const generateWallet = async () => {
-    if (!authenticated || !user) return;
+    if (!authenticated) return;
     
     setGeneratingWallet(true);
     try {
@@ -184,6 +219,29 @@ export default function Wallet() {
     }
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/auth');
+  };
+
+  // Connect external wallet via Privy
+  const connectExternalWallet = async () => {
+    try {
+      if (!privyAuthenticated) {
+        await privyLogin();
+      } else {
+        await linkWallet();
+      }
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect external wallet",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Show login prompt if not authenticated
   if (!loading && !authenticated) {
     return (
@@ -192,16 +250,16 @@ export default function Wallet() {
           <CardHeader>
             <CardTitle className="text-center flex items-center justify-center gap-2">
               <WalletIcon className="h-6 w-6" />
-              Connect Your Wallet
+              Access Your Wallet
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-center text-muted-foreground">
-              Sign in with Privy to access your gamified wallet and start earning XP!
+              Sign in to access your gamified wallet and start earning XP!
             </p>
-            <Button onClick={login} className="w-full" size="lg">
+            <Button onClick={() => navigate('/auth')} className="w-full" size="lg">
               <Shield className="mr-2 h-5 w-5" />
-              Sign in with Privy
+              Sign In
             </Button>
             <div className="text-center text-sm text-muted-foreground">
               New users automatically get a wallet and 100 base airdrop allocation
@@ -333,10 +391,7 @@ export default function Wallet() {
               <span className="font-typewriter font-bold text-xl">Gami Wallet</span>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => {
-                logout?.();
-                navigate('/');
-              }}>
+              <Button variant="ghost" size="icon" onClick={handleSignOut}>
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
@@ -346,9 +401,9 @@ export default function Wallet() {
 
       <main className="container px-4 py-8 space-y-8">
         {/* Wallet Address Card */}
-        {!walletData?.wallet_address ? (
-          <Card className="border-primary/50">
-            <CardContent className="pt-6">
+        <Card className="border-primary/50">
+          <CardContent className="pt-6 space-y-4">
+            {!walletData?.wallet_address ? (
               <div className="text-center space-y-4">
                 <WalletIcon className="h-12 w-12 mx-auto text-primary" />
                 <div>
@@ -376,27 +431,52 @@ export default function Wallet() {
                   )}
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-1">Your Wallet Address</p>
-                  <div className="flex items-center gap-2">
-                    <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg">
-                      {walletData.wallet_address}
-                    </code>
-                    <Button variant="ghost" size="icon" onClick={copyAddress}>
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-muted-foreground">Your Gami Wallet</p>
+                </div>
+                <div className="flex items-center gap-2 mb-4">
+                  <code className="text-sm font-mono bg-muted px-3 py-2 rounded-lg flex-1">
+                    {walletData.wallet_address}
+                  </code>
+                  <Button variant="ghost" size="icon" onClick={copyAddress}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+            
+            {/* External Wallet Connection */}
+            <div className="border-t pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium mb-1">External Wallet</p>
+                  <p className="text-xs text-muted-foreground">
+                    Connect MetaMask, Coinbase, or other wallets
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={connectExternalWallet}
+                  className="gap-2"
+                >
+                  <LinkIcon className="h-4 w-4" />
+                  {externalWallet ? 'Change' : 'Connect'}
+                </Button>
+              </div>
+              {externalWallet && (
+                <div className="mt-3 flex items-center gap-2">
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {externalWallet.slice(0, 6)}...{externalWallet.slice(-4)}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">Connected</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Level & XP Card */}
         <Card className="bg-gradient-primary border-0 text-white">
