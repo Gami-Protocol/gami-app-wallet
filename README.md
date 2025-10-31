@@ -1,73 +1,194 @@
-# Welcome to your Lovable project
+# 🎮 Gami Protocol
 
-## Project info
+**The Modular On-Chain Gamification Engine**
 
-**URL**: https://lovable.dev/projects/c8a70b11-cf73-4090-8c2a-4e214504d79e
+Gami Protocol unifies XP, rewards, and AI-driven engagement across apps, games, and blockchains. A comprehensive gamification platform that bridges Web2 and Web3 experiences.
 
-## How can I edit this code?
+![Gami Protocol](https://c8a70b11-cf73-4090-8c2a-4e214504d79e.lovableproject.com/gami-logo.png)
 
-There are several ways of editing your application.
+## ✨ Features
 
-**Use Lovable**
+### 🎯 User Portal
+- **Gamified Wallet**: Manage your crypto wallet with XP tracking and level progression
+- **AI-Generated Avatars**: Unique character avatars generated when wallets are created
+- **Quest System**: Complete challenges and earn rewards
+- **Achievement Tracking**: Monitor your progress and milestones
+- **Reward Redemption**: Exchange XP for exclusive rewards
+- **Airdrop Allocations**: Track and claim token distributions
+- **Level & XP System**: Progress through levels with bonus multipliers
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c8a70b11-cf73-4090-8c2a-4e214504d79e) and start prompting.
+### 💼 Business Portal
+- **Dashboard Analytics**: Comprehensive metrics and insights
+- **Quest Management**: Create and manage gamification campaigns
+- **User Analytics**: Track engagement and participation
+- **Settings & Configuration**: Customize your gamification experience
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🔐 Authentication & Wallet Integration
+- **Privy Integration**: Secure Web3 authentication
+- **Multiple Login Methods**: Wallet, email, and Google sign-in
+- **Embedded Wallets**: Create wallets without leaving the app
+- **External Wallet Connection**: Link existing crypto wallets
 
-**Use your preferred IDE**
+## 🛠 Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Frontend
+- **React 18** - Modern UI library
+- **TypeScript** - Type-safe development
+- **Vite** - Lightning-fast build tool
+- **Tailwind CSS** - Utility-first styling
+- **shadcn/ui** - Beautiful component library
+- **React Router** - Client-side routing
+- **TanStack Query** - Server state management
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Backend (Lovable Cloud)
+- **Supabase** - Backend as a service
+- **PostgreSQL** - Robust database
+- **Row Level Security** - Data protection
+- **Edge Functions** - Serverless compute
+- **AI Gateway** - Image generation for avatars
 
-Follow these steps:
+### Web3
+- **Privy** - Wallet authentication
+- **Wagmi** - React hooks for Ethereum
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18 or higher)
+- npm or yarn
+
+### Installation
+
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Navigate to project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Environment Variables
 
-**Use GitHub Codespaces**
+The following environment variables are automatically configured via Lovable Cloud:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```env
+VITE_SUPABASE_URL=<your-supabase-url>
+VITE_SUPABASE_PUBLISHABLE_KEY=<your-anon-key>
+VITE_SUPABASE_PROJECT_ID=<your-project-id>
+VITE_PRIVY_APP_ID=<your-privy-app-id>
+```
 
-## What technologies are used for this project?
+## 📁 Project Structure
 
-This project is built with:
+```
+src/
+├── components/          # Reusable UI components
+│   ├── layouts/        # Layout wrappers for user/business portals
+│   └── ui/            # shadcn/ui components
+├── pages/              # Route pages
+│   ├── user/          # User portal pages
+│   └── business/      # Business portal pages
+├── hooks/              # Custom React hooks
+├── lib/               # Utility functions
+├── integrations/      # Third-party integrations
+│   └── supabase/     # Supabase client & types
+└── providers/         # Context providers
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+supabase/
+├── functions/         # Edge functions
+│   ├── generate-avatar/      # AI avatar generation
+│   ├── create-checkout/      # Payment processing
+│   └── manage-access-codes/  # Access control
+└── migrations/        # Database migrations
+```
 
-## How can I deploy this project?
+## 🗄 Database Schema
 
-Simply open [Lovable](https://lovable.dev/projects/c8a70b11-cf73-4090-8c2a-4e214504d79e) and click on Share -> Publish.
+### Core Tables
+- **wallets** - User wallet data with XP and levels
+- **quests** - Gamification challenges
+- **quest_user** - User quest participation
+- **quest_completions** - Completed quest records
+- **rewards** - Available rewards catalog
+- **user_rewards** - Redeemed rewards tracking
+- **airdrop_allocations** - Token distribution management
 
-## Can I connect a custom domain to my Lovable project?
+## 🎨 Key Features Implementation
 
-Yes, you can!
+### Avatar Generation
+When users create a wallet, an AI-generated character avatar is automatically created using the Lovable AI Gateway with Google's Gemini model.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### XP & Leveling System
+- XP accumulates through quest completion
+- Level calculation: `floor(sqrt(xp / 100))`
+- Each level provides a 5% bonus multiplier
+- XP required for next level scales progressively
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Quest System
+- Businesses create quests with XP rewards
+- Users complete quests to earn XP
+- Real-time progress tracking
+- Claim system with validation
+
+### Reward Redemption
+- Spend XP to unlock rewards
+- Persistent reward catalog
+- Transaction history tracking
+
+## 🔒 Security
+
+- **Row Level Security (RLS)** enabled on all tables
+- **Authentication required** for protected routes
+- **Input validation** using Zod schemas
+- **Secure wallet integration** via Privy
+- **Environment variables** for sensitive data
+
+## 🚢 Deployment
+
+### Deploy with Lovable
+1. Open your project in [Lovable](https://lovable.dev)
+2. Click **Share** → **Publish**
+3. Your app is live!
+
+### Custom Domain
+Connect your custom domain:
+1. Go to **Project** → **Settings** → **Domains**
+2. Click **Connect Domain**
+3. Follow the DNS configuration steps
+
+## 📚 Documentation
+
+- [Lovable Documentation](https://docs.lovable.dev/)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Privy Documentation](https://docs.privy.io/)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+
+## 🤝 Contributing
+
+This project is built with Lovable. To contribute:
+
+1. Make changes via [Lovable editor](https://lovable.dev/projects/c8a70b11-cf73-4090-8c2a-4e214504d79e)
+2. Or clone the repo and push changes
+3. All changes sync bidirectionally with Lovable
+
+## 📄 License
+
+This project is built with Lovable and follows standard licensing practices.
+
+## 🆘 Support
+
+- **Discord**: [Join Lovable Community](https://discord.com/channels/1119885301872070706/1280461670979993613)
+- **Documentation**: [docs.lovable.dev](https://docs.lovable.dev)
+- **Email**: support@lovable.dev
+
+---
+
+**Built with ❤️ using [Lovable](https://lovable.dev)**
