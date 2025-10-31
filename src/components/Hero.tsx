@@ -13,10 +13,7 @@ export const Hero = () => {
   };
 
   const handleViewLitepaper = () => {
-    toast({
-      title: "Litepaper Opening Soon",
-      description: "Our comprehensive litepaper will be available shortly!",
-    });
+    window.open('/Gami_Protocol_Hybrid_Whitepaper.pdf', '_blank');
   };
 
   return (
