@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check, Zap, Rocket, Crown, Bitcoin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import {
   Dialog,
@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 // Stripe product configuration
 const PRICING_TIERS = {
@@ -84,8 +86,31 @@ export default function Pricing() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [selectedPlan, setSelectedPlan] = useState<{ priceId: string; name: string } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Handle subscription status from URL parameters
+  useEffect(() => {
+    const subscriptionStatus = searchParams.get('subscription');
+    
+    if (subscriptionStatus === 'success') {
+      toast({
+        title: "Subscription Successful! 🎉",
+        description: "Thank you for subscribing. You'll receive a confirmation email shortly.",
+      });
+      // Clean up URL
+      setSearchParams({});
+    } else if (subscriptionStatus === 'cancelled') {
+      toast({
+        title: "Checkout Cancelled",
+        description: "Your subscription was not completed. Feel free to try again whenever you're ready.",
+        variant: "destructive",
+      });
+      // Clean up URL
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams, toast]);
 
   const handleSubscribeClick = (priceId: string, planName: string) => {
     setSelectedPlan({ priceId, name: planName });
@@ -141,6 +166,27 @@ export default function Pricing() {
       <Navbar />
       
       <main className="container px-4 py-24 md:py-32">
+        {/* Status Alert - shown after checkout */}
+        {searchParams.get('subscription') === 'success' && (
+          <Alert className="max-w-3xl mx-auto mb-8 border-green-500 bg-green-50 dark:bg-green-950">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-800 dark:text-green-200">Subscription Successful!</AlertTitle>
+            <AlertDescription className="text-green-700 dark:text-green-300">
+              Welcome aboard! Your subscription is now active. Check your email for the confirmation and next steps.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {searchParams.get('subscription') === 'cancelled' && (
+          <Alert className="max-w-3xl mx-auto mb-8 border-amber-500 bg-amber-50 dark:bg-amber-950">
+            <XCircle className="h-4 w-4 text-amber-600" />
+            <AlertTitle className="text-amber-800 dark:text-amber-200">Checkout Cancelled</AlertTitle>
+            <AlertDescription className="text-amber-700 dark:text-amber-300">
+              No worries! Your subscription wasn't processed. Choose a plan below whenever you're ready.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16">
           <Badge className="mb-4" variant="secondary">
