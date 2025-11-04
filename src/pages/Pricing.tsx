@@ -7,6 +7,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // Stripe product configuration
 const PRICING_TIERS = {
@@ -71,39 +81,38 @@ const PRICING_TIERS = {
 
 export default function Pricing() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<{ priceId: string; name: string } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubscribe = async (priceId: string, planName: string) => {
-    setLoading(priceId);
+  const handleSubscribeClick = (priceId: string, planName: string) => {
+    setSelectedPlan({ priceId, name: planName });
+    setEmail('');
+    setDialogOpen(true);
+  };
+
+  const handleConfirmSubscription = async () => {
+    if (!selectedPlan) return;
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please provide a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLoading(selectedPlan.priceId);
+    setDialogOpen(false);
+
     try {
-      // Prompt for email
-      const email = prompt("Please enter your email address to continue:");
-      
-      if (!email) {
-        toast({
-          title: "Email Required",
-          description: "Please provide your email to continue with checkout",
-          variant: "destructive",
-        });
-        setLoading(null);
-        return;
-      }
-
-      // Basic email validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        toast({
-          title: "Invalid Email",
-          description: "Please provide a valid email address",
-          variant: "destructive",
-        });
-        setLoading(null);
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId, email }
+        body: { priceId: selectedPlan.priceId, email }
       });
 
       if (error) throw error;
@@ -112,7 +121,7 @@ export default function Pricing() {
         window.location.href = data.url;
         toast({
           title: "Redirecting to Checkout",
-          description: `Opening Stripe checkout for ${planName} plan`,
+          description: `Opening Stripe checkout for ${selectedPlan.name} plan`,
         });
       }
     } catch (error) {
@@ -194,7 +203,7 @@ export default function Pricing() {
                     className="w-full" 
                     size="lg"
                     variant={tier.popular ? 'default' : 'outline'}
-                    onClick={() => handleSubscribe(tier.priceId, tier.name)}
+                    onClick={() => handleSubscribeClick(tier.priceId, tier.name)}
                     disabled={loading === tier.priceId}
                   >
                     {loading === tier.priceId ? 'Loading...' : 'Subscribe Now'}
@@ -268,6 +277,43 @@ export default function Pricing() {
           </div>
         </div>
       </main>
+
+      {/* Email Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enter Your Email</DialogTitle>
+            <DialogDescription>
+              Please provide your email address to continue with the {selectedPlan?.name} plan subscription.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleConfirmSubscription();
+                  }
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmSubscription}>
+              Continue to Checkout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
