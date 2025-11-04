@@ -77,26 +77,39 @@ export default function Pricing() {
   const handleSubscribe = async (priceId: string, planName: string) => {
     setLoading(priceId);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Prompt for email
+      const email = prompt("Please enter your email address to continue:");
       
-      if (!session) {
+      if (!email) {
         toast({
-          title: "Authentication Required",
-          description: "Please sign in to subscribe to a plan",
+          title: "Email Required",
+          description: "Please provide your email to continue with checkout",
           variant: "destructive",
         });
-        navigate('/auth');
+        setLoading(null);
+        return;
+      }
+
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        toast({
+          title: "Invalid Email",
+          description: "Please provide a valid email address",
+          variant: "destructive",
+        });
+        setLoading(null);
         return;
       }
 
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { priceId }
+        body: { priceId, email }
       });
 
       if (error) throw error;
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        window.location.href = data.url;
         toast({
           title: "Redirecting to Checkout",
           description: `Opening Stripe checkout for ${planName} plan`,

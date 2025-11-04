@@ -166,7 +166,10 @@ export default function Auth() {
           const { data: sessionData, error: checkoutError } = await supabase.functions.invoke(
             'create-checkout',
             {
-              body: { priceId: BUSINESS_TIERS[selectedTier].priceId }
+              body: { 
+                priceId: BUSINESS_TIERS[selectedTier].priceId,
+                email: contactEmail || email
+              }
             }
           );
 
@@ -176,9 +179,8 @@ export default function Auth() {
             return;
           }
 
-          // Open checkout in new tab
-          window.open(sessionData.url, '_blank');
-          navigate("/business/dashboard");
+          // Redirect to checkout
+          window.location.href = sessionData.url;
         } else {
           toast.success("Account created successfully!");
           navigate("/user/dashboard");
