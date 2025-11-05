@@ -26,12 +26,27 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("Configuration error");
     logStep("Stripe key verified");
 
-    const { priceId, email } = await req.json();
-    if (!priceId || !email) throw new Error("Invalid request parameters");
+    const { priceId, email: rawEmail } = await req.json();
+    if (!priceId || !rawEmail) throw new Error("Invalid request parameters");
     
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Sanitize and validate email
+    const email = String(rawEmail).trim().toLowerCase();
+    
+    // Check email length (RFC 5321)
+    if (email.length < 3 || email.length > 254) {
+      throw new Error("Invalid email format");
+    }
+    
+    // Enhanced email validation regex
+    const emailRegex = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
     if (!emailRegex.test(email)) {
+      throw new Error("Invalid email format");
+    }
+    
+    // Block common disposable email domains
+    const disposableDomains = ['tempmail.com', 'throwaway.email', '10minutemail.com', 'guerrillamail.com', 'mailinator.com'];
+    const domain = email.split('@')[1];
+    if (disposableDomains.includes(domain)) {
       throw new Error("Invalid email format");
     }
     
